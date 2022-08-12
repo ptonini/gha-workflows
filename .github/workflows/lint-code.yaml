@@ -1,0 +1,21 @@
+name: lint-code
+
+on:
+  workflow_call:
+
+jobs:
+  lint_code:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - uses: actions/checkout@main
+        with:
+          ref: ${{ github.head_ref }}
+      - run: (dotnet restore -f --no-cache && dotnet build && dotnet format) || true
+        if: github.event.repository.language == 'C#'
+      - run: (yarn && yarn lint && yarn format) || true
+        if: github.event.repository.language == 'TypeScript'
+      - uses: dawidd6/action-git-user-config@v1
+      - uses: EndBug/add-and-commit@v9
+        with:
+          message: "chore: automated linting"

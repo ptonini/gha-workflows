@@ -1,0 +1,23 @@
+name: configure
+
+concurrency:
+  group: configure
+
+on:
+  workflow_dispatch: ~
+
+jobs:
+  start:
+    uses: ptonini/gha-workflows/.github/workflows/start.yaml@main
+    secrets:
+      ORG_CONFIG: ${{ secrets.ORG_CONFIG }}
+  apply_helm_release:
+    uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
+    needs:
+      - start
+    secrets:
+      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
+      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+  

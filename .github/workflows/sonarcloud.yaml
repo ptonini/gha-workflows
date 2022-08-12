@@ -1,0 +1,43 @@
+name: sonarcloud
+
+on:
+  workflow_call:
+    secrets:
+      GH_PACKAGES_TOKEN:
+        description: ''
+        required: true
+      SONAR_TOKEN:
+        description: ''
+        required: true
+  
+jobs:
+  sonarcloud:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - uses: actions/checkout@main
+        with:
+          fetch-depth: 0
+      - uses: ptonini/gha-load-metadata@main
+      - uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.REPORTS_FOLDER }}
+      - uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=${{ github.repository_owner }}
+            -Dsonar.projectName=${{ github.event.repository.name }}
+            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
+            -Dsonar.go.coverage.reportPaths=${{ env.REPORTS_FOLDER }}/${{ env.GO_COVERAGE_PROFILE }}
+            -Dsonar.go.tests.reportPaths=${{ env.REPORTS_FOLDER }}/${{ env.GO_TEST_REPORT }}
+            -Dsonar.python.coverage.reportPaths=${{ env.REPORTS_FOLDER }}/${{ env.PYTHON_COVERAGE_REPORT }}
+            -Dsonar.python.xunit.reportPath=${{ env.REPORTS_FOLDER }}/${{ env.PYTHON_XUNIT_REPORT }}
+            -Dsonar.javascript.lcov.reportPaths=${{ env.REPORTS_FOLDER }}/${{ env.JAVASCRIPT_LCOV_INFO }}
+            -Dsonar.sources=.
+            -Dsonar.tests=.
+            -Dsonar.exclusions=demo/**
+            -Dsonar.test.inclusions=**/*_test.go
+        continue-on-error: true

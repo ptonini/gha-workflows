@@ -1,0 +1,54 @@
+name: start
+
+on:
+  workflow_call:
+    secrets:
+      ORG_CONFIG:
+        description: ''
+        required: true
+    outputs:
+      release_version:
+        description: ''
+        value: ${{ jobs.start.outputs.release_version }}
+      skip_tests:
+        description: ''
+        value: ${{ jobs.start.outputs.skip_tests }}
+      publish_candidate:
+        description: ''
+        value: ${{ jobs.start.outputs.publish_candidate }}
+      deploy_staging:
+        description: ''
+        value: ${{ jobs.start.outputs.deploy_staging }}
+      destroy_staging:
+        description: ''
+        value: ${{ jobs.start.outputs.destroy_staging }}
+      approve_candidate:
+        description: ''
+        value: ${{ jobs.start.outputs.approve_candidate }}
+      deploy_production:
+        description: ''
+        value: ${{ jobs.start.outputs.deploy_production }}
+      housekeeping:
+        description: ''
+        value: ${{ jobs.start.outputs.housekeeping }}
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    outputs:
+      release_version: ${{ steps.get_metadata.outputs.release_version }}
+      skip_tests: ${{ steps.get_metadata.outputs.skip_tests }}
+      publish_candidate: ${{ steps.get_metadata.outputs.publish_candidate }}
+      deploy_staging: ${{ steps.get_metadata.outputs.deploy_staging }}
+      destroy_staging: ${{ steps.get_metadata.outputs.destroy_staging }}
+      approve_candidate: ${{ steps.get_metadata.outputs.approve_candidate }}
+      deploy_production: ${{ steps.get_metadata.outputs.deploy_production }}
+      housekeeping: ${{ steps.get_metadata.outputs.housekeeping }}
+    steps:
+      - run: env | sort
+      - run: jq . "${GITHUB_EVENT_PATH}"
+      - uses: actions/checkout@main
+      - uses: ptonini/gha-get-metadata@main
+        id: get_metadata
+        with:
+          github_token: ${{ github.token }}
+          org_config: ${{ secrets.ORG_CONFIG }}

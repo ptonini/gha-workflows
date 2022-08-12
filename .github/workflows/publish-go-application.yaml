@@ -1,0 +1,39 @@
+name: publish-go-application
+
+on:
+  workflow_call:
+    inputs:
+      tag_name:
+        description: ''
+        required: true
+      release_created:
+        description: ''
+        required: true
+  
+jobs:
+  publish_go_application:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - uses: actions/checkout@main
+      - uses: ptonini/gha-load-metadata@main
+      - run: docker run -v $(pwd):$(pwd) -w $(pwd) ${GO_BUILD_IMAGE} go build -o ${PROJECT_NAME} ${GO_MAIN_FILE}
+      - run: sha256sum ${PROJECT_NAME} > SHA256SUMS
+      - uses: actions/upload-artifact@v3
+        with:
+          name: application
+          path: |
+            ${{ env.PROJECT_NAME }}
+            SHA256SUMS
+      - uses: svenstaro/upload-release-action@v2
+        if: inputs.release_created == 'true'
+        with:
+          file: ${{ env.PROJECT_NAME }}
+          repo_token: ${{ github.token }}
+          tag: v${{ inputs.tag_name }}
+      - uses: svenstaro/upload-release-action@v2
+        if: inputs.release_created == 'true'
+        with:
+          file: SHA256SUMS
+          repo_token: ${{ github.token }}
+          tag: ${{ inputs.tag_name }}

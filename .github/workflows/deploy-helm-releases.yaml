@@ -1,0 +1,49 @@
+name: deploy-helm-releases
+
+on:
+  workflow_call:
+    inputs:
+      checksum:
+        description: ''
+        default: ''
+        type: string
+    secrets:
+      OPENVPN_CONFIG:
+        description: ''
+        required: true
+      VAULT_ADDR:
+        description: ''
+        required: true
+      VAULT_APPROLE_ROLE_ID:
+        description: ''
+        required: true
+      VAULT_APPROLE_SECRET_ID:
+        description: ''
+        required: true
+
+jobs:
+  deploy_helm_releases:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - uses: ptonini/gha-load-metadata@main
+      - uses: ptonini/gha-openvpn@main
+        with:
+          openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
+          validation_addr: ${{ secrets.VAULT_ADDR }}
+      - uses: hashicorp/vault-action@v2.3.0
+        with:
+          method: approle
+          url: ${{ secrets.VAULT_ADDR }}
+          roleId: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+          secrets: |
+            github/token token | GH_TOKEN;
+            ${{ env.REGISTRY_CREDENTIALS_PATH }} dockerconfigjson | REGISTRY_CREDENTIALS;
+            ${{ env.K8S_ROLE_PATH }} kube_config | KUBECONFIG_CONTENT;
+      - uses: ptonini/gha-prepare-helm-releases@main
+        with:
+          github_token: ${{ env.GH_TOKEN }}
+          checksum: ${{ inputs.checksum }}
+      - run: echo "${KUBECONFIG_CONTENT}" > kubeconfig && chmod 0600 kubeconfig && echo "KUBECONFIG=kubeconfig" >> ${GITHUB_ENV}
+      - run: for D in */; do source "${D}parameters" && helm -n ${NAMESPACE} --debug upgrade -i --repo ${REPOSITORY} --version ${CHART_VERSION} -f "${D}values.json" --history-max 1 ${RELEASE_NAME} ${CHART} ${HELM_EXTRA_ARGUMENTS}; done

@@ -1,0 +1,118 @@
+name: deploy
+
+concurrency:
+  group: ${{ github.event_name }}-${{ github.event.number }}
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - legacy/*
+    paths-ignore:
+      - manifest.yaml
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - closed
+    branches:
+      - master
+      - main
+      - legacy/*
+
+jobs:
+  release_please:
+    uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
+    if: github.event_name == 'push'
+  
+  start:
+    uses: ptonini/gha-workflows/.github/workflows/start.yaml@main
+    if: (!contains(github.event.pull_request.head.ref, 'release-please--'))
+    secrets:
+      ORG_CONFIG: ${{ secrets.ORG_CONFIG }}
+  
+  publish_candidate:
+    uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
+    if: needs.start.outputs.publish_candidate == 'true'
+    needs:
+      - start
+    with:
+      tags: ${{ format('latest pr{0}', github.event.number) }}
+    secrets:
+      BUILD_PASSWORD: ${{ secrets.GH_PACKAGES_TOKEN }}
+  deploy_staging:
+    uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
+    if: needs.start.outputs.deploy_staging == 'true'
+    needs:
+      - start
+      - publish_candidate
+    with:
+      checksum: ${{ needs.publish_candidate.outputs.checksum }}
+    secrets:
+      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
+      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+
+  destroy_staging:
+    uses: ptonini/gha-workflows/.github/workflows/destroy-namespace.yaml@main
+    if: needs.start.outputs.destroy_staging == 'true'
+    needs:
+      - start
+    secrets:
+      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
+      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+  
+  approve_candidate:
+    uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main
+    if: needs.start.outputs.approve_candidate == 'true'
+    needs:
+      - start
+    with:
+      source_tag: ${{ format('pr{0}', github.event.pull_request.number) }}
+      tag: pr-approved
+  
+  retag_for_production:
+    uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main
+    if: needs.start.outputs.deploy_production == 'true'
+    needs:
+      - start
+    with:
+      source_tag: pr-approved
+      tag: ${{ needs.start.outputs.release_version }}
+  deploy_production:
+    uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
+    needs:
+      - retag_for_production
+    secrets:
+      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
+      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+  
+  unit_tests:
+    uses: ptonini/gha-workflows/.github/workflows/unit-tests.yaml@main
+    if: needs.start.outputs.skip_tests == 'false'
+    needs:
+      - start
+  quality_scan:
+    uses: ptonini/gha-workflows/.github/workflows/sonarcloud.yaml@main
+    needs:
+      - unit_tests
+    secrets:
+      GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  
+  lint_code:
+    uses: ptonini/gha-workflows/.github/workflows/lint-code.yaml@main
+    if: needs.start.outputs.housekeeping == 'true'
+    needs:
+      - start
+  security_leaks_scan:
+    uses: ptonini/gha-workflows/.github/workflows/trufflehog.yaml@main
+    if: needs.start.outputs.housekeeping == 'true'
+    needs:
+      - start

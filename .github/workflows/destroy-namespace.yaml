@@ -1,0 +1,49 @@
+name: destroy-namespace
+
+on:
+  workflow_call:
+    secrets:
+      OPENVPN_CONFIG:
+        description: ''
+        required: true
+      VAULT_ADDR:
+        description: ''
+        required: true
+      VAULT_APPROLE_ROLE_ID:
+        description: ''
+        required: true
+      VAULT_APPROLE_SECRET_ID:
+        description: ''
+        required: true
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  destroy_namespace:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - uses: ptonini/gha-load-metadata@main
+      - uses: ptonini/gha-openvpn@main
+        with:
+          openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
+          validation_addr: ${{ secrets.VAULT_ADDR }}
+      - uses: hashicorp/vault-action@v2.3.0
+        with:
+          method: approle
+          url: ${{ secrets.VAULT_ADDR }}
+          roleId: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+          secrets: |
+            ${{ env.K8S_ROLE_PATH }} kube_config | KUBECONFIG_CONTENT;
+            ${{ env.AWS_ROLE_PATH }} access_key | AWS_ACCESS_KEY_ID;
+            ${{ env.AWS_ROLE_PATH }} secret_key | AWS_SECRET_ACCESS_KEY;
+            ${{ env.AWS_ROLE_PATH }} security_token | AWS_SESSION_TOKEN;
+      - run: echo "${KUBECONFIG_CONTENT}" > kubeconfig && chmod 0600 kubeconfig && echo "KUBECONFIG=kubeconfig" >> ${GITHUB_ENV}
+      - run: helm --namespace ${NAMESPACE} list --short | xargs -r helm uninstall --namespace ${NAMESPACE}
+      - run: kubectl delete all --all --namespace ${NAMESPACE}
+      - run: kubectl get namespace ${NAMESPACE} && kubectl delete namespace ${NAMESPACE} || exit 0
+      - run: aws route53 list-resource-record-sets --no-paginate --max-items=500 --hosted-zone-id ${ROUTE53_ZONE_ID} > record_set.json
+      - run: "jq '.ResourceRecordSets | map(select(.Name | contains(\"'${STAGING_DOMAIN}'\")) | {Action: \"DELETE\", ResourceRecordSet: .}) | {Changes: .}' record_set.json | tee payload.json"
+      - run: "[[ $(jq '.Changes | length' payload.json) == '0' ]] || aws route53 change-resource-record-sets --hosted-zone-id ${ROUTE53_ZONE_ID} --change-batch file://payload.json"
