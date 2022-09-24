@@ -16,4 +16,4 @@ jobs:
           path: ./
           base: ${{ github.event.repository.default_branch }}
           head: HEAD
-          extra_args: --max-depth=1
+          extra_args: --max-depth=3

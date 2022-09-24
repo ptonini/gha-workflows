@@ -1,4 +1,4 @@
-name: start
+name: startup
 
 on:
   workflow_call:
@@ -9,43 +9,39 @@ on:
     outputs:
       release_version:
         description: ''
-        value: ${{ jobs.start.outputs.release_version }}
+        value: ${{ jobs.startup.outputs.release_version }}
       skip_tests:
         description: ''
-        value: ${{ jobs.start.outputs.skip_tests }}
+        value: ${{ jobs.startup.outputs.skip_tests }}
+      skip_staging:
+        description: ''
+        value: ${{ jobs.startup.outputs.skip_staging }}
       publish_candidate:
         description: ''
-        value: ${{ jobs.start.outputs.publish_candidate }}
-      deploy_staging:
-        description: ''
-        value: ${{ jobs.start.outputs.deploy_staging }}
-      destroy_staging:
-        description: ''
-        value: ${{ jobs.start.outputs.destroy_staging }}
+        value: ${{ jobs.startup.outputs.publish_candidate }}
       approve_candidate:
         description: ''
-        value: ${{ jobs.start.outputs.approve_candidate }}
-      deploy_production:
+        value: ${{ jobs.startup.outputs.approve_candidate }}
+      promote_candidate:
         description: ''
-        value: ${{ jobs.start.outputs.deploy_production }}
+        value: ${{ jobs.startup.outputs.promote_candidate }}
       housekeeping:
         description: ''
-        value: ${{ jobs.start.outputs.housekeeping }}
+        value: ${{ jobs.startup.outputs.housekeeping }}
 jobs:
-  start:
+  startup:
     runs-on: ubuntu-latest
     outputs:
       release_version: ${{ steps.get_metadata.outputs.release_version }}
       skip_tests: ${{ steps.get_metadata.outputs.skip_tests }}
-      publish_candidate: ${{ steps.get_metadata.outputs.publish_candidate }}
-      deploy_staging: ${{ steps.get_metadata.outputs.deploy_staging }}
-      destroy_staging: ${{ steps.get_metadata.outputs.destroy_staging }}
-      approve_candidate: ${{ steps.get_metadata.outputs.approve_candidate }}
-      deploy_production: ${{ steps.get_metadata.outputs.deploy_production }}
+      skip_staging: ${{ steps.get_metadata.outputs.skip_staging }}
       housekeeping: ${{ steps.get_metadata.outputs.housekeeping }}
-    steps:
+      publish_candidate: ${{ steps.get_metadata.outputs.publish_candidate }}
+      approve_candidate: ${{ steps.get_metadata.outputs.approve_candidate }}
+      promote_candidate: ${{ steps.get_metadata.outputs.promote_candidate }}
+      steps:
       - run: env | sort
-      - run: jq . "${GITHUB_EVENT_PATH}"
+      - run: jq . ${{ github.event_path }}
       - uses: actions/checkout@main
       - uses: ptonini/gha-get-metadata@main
         id: get_metadata

@@ -15,6 +15,8 @@ jobs:
         if: github.event.repository.language == 'C#'
       - run: (yarn && yarn lint && yarn format) || true
         if: github.event.repository.language == 'TypeScript'
+      - run: go fmt || true
+        if: github.event.repository.language == 'Go'
       - uses: dawidd6/action-git-user-config@v1
       - uses: EndBug/add-and-commit@v9
         with:

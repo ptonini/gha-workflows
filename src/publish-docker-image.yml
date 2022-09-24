@@ -1,7 +1,4 @@
-name: deploy
-
-concurrency:
-  group: ${{ github.event_name }}-${{ github.event.number }}
+name: publish
 
 on:
   push:
@@ -9,8 +6,6 @@ on:
       - master
       - main
       - legacy/*
-    paths-ignore:
-      - manifest.yaml
   pull_request:
     types:
       - opened
@@ -41,30 +36,6 @@ jobs:
       tags: ${{ format('latest pr{0}', github.event.number) }}
     secrets:
       BUILD_PASSWORD: ${{ secrets.GH_PACKAGES_TOKEN }}
-  deploy_staging:
-    uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
-    if: needs.startup.outputs.skip_staging == 'false'
-    needs:
-      - startup
-      - publish_candidate
-    with:
-      checksum: ${{ needs.publish_candidate.outputs.checksum }}
-    secrets:
-      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
-      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
-
-  destroy_staging:
-    uses: ptonini/gha-workflows/.github/workflows/destroy-namespace.yaml@main
-    if: needs.startup.outputs.skip_staging == 'false'
-    needs:
-      - startup
-    secrets:
-      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
-      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
   
   approve_candidate:
     uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main
@@ -83,16 +54,7 @@ jobs:
     with:
       source_tag: pr-approved
       tag: ${{ needs.startup.outputs.release_version }}
-  deploy_production:
-    uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
-    needs:
-      - retag_for_production
-    secrets:
-      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
-      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
-  
+   
   unit_tests:
     uses: ptonini/gha-workflows/.github/workflows/unit-tests.yaml@main
     if: needs.startup.outputs.skip_tests == 'false'
@@ -105,7 +67,7 @@ jobs:
     secrets:
       GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  
+
   lint_code:
     uses: ptonini/gha-workflows/.github/workflows/lint-code.yaml@main
     if: needs.startup.outputs.housekeeping == 'true'

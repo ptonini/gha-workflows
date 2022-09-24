@@ -8,7 +8,7 @@ on:
 
 jobs:
   start:
-    uses: ptonini/gha-workflows/.github/workflows/start.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/startup.yaml@main
     secrets:
       ORG_CONFIG: ${{ secrets.ORG_CONFIG }}
   apply_helm_release:

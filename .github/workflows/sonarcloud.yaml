@@ -31,11 +31,11 @@ jobs:
             -Dsonar.organization=${{ github.repository_owner }}
             -Dsonar.projectName=${{ github.event.repository.name }}
             -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
-            -Dsonar.go.coverage.reportPaths=${{ env.REPORTS_FOLDER }}/${{ env.GO_COVERAGE_PROFILE }}
-            -Dsonar.go.tests.reportPaths=${{ env.REPORTS_FOLDER }}/${{ env.GO_TEST_REPORT }}
-            -Dsonar.python.coverage.reportPaths=${{ env.REPORTS_FOLDER }}/${{ env.PYTHON_COVERAGE_REPORT }}
-            -Dsonar.python.xunit.reportPath=${{ env.REPORTS_FOLDER }}/${{ env.PYTHON_XUNIT_REPORT }}
-            -Dsonar.javascript.lcov.reportPaths=${{ env.REPORTS_FOLDER }}/${{ env.JAVASCRIPT_LCOV_INFO }}
+            -Dsonar.go.coverage.reportPaths=${{ env.GO_COVERAGE_PROFILE }}
+            -Dsonar.go.tests.reportPaths=${{ env.GO_TEST_REPORT }}
+            -Dsonar.python.coverage.reportPaths=${{ env.PYTHON_COVERAGE_REPORT }}
+            -Dsonar.python.xunit.reportPath=${{ env.PYTHON_XUNIT_REPORT }}
+            -Dsonar.javascript.lcov.reportPaths=${{ env.JAVASCRIPT_LCOV_INFO }}
             -Dsonar.sources=.
             -Dsonar.tests=.
             -Dsonar.exclusions=demo/**
