@@ -1,10 +1,10 @@
-name: lint-code
+name: code-linting
 
 on:
   workflow_call:
 
 jobs:
-  lint_code:
+  code_linting:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

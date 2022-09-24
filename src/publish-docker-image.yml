@@ -68,8 +68,8 @@ jobs:
       GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  lint_code:
-    uses: ptonini/gha-workflows/.github/workflows/lint-code.yaml@main
+  code_linting:
+    uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
     if: needs.startup.outputs.housekeeping == 'true'
     needs:
       - startup
