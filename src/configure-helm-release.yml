@@ -7,14 +7,14 @@ on:
   workflow_dispatch: ~
 
 jobs:
-  start:
+  startup:
     uses: ptonini/gha-workflows/.github/workflows/startup.yaml@main
     secrets:
       ORG_CONFIG: ${{ secrets.ORG_CONFIG }}
   apply_helm_release:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     needs:
-      - start
+      - startup
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       VAULT_ADDR: ${{ secrets.VAULT_ADDR }}

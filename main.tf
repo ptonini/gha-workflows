@@ -34,3 +34,11 @@ module "workflow_publish_go_application" {
   owner   = local.github_owner
 }
 
+module "workflow_publish_docker_image" {
+  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  topics  = ["docker-image github-flow"]
+  file    = ".github/workflows/publish.yml"
+  content = file("src/publish-docker-image.yml")
+  owner   = local.github_owner
+}
+

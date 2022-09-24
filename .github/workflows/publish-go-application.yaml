@@ -19,18 +19,18 @@ jobs:
       - run: env | sort
       - uses: actions/checkout@main
       - uses: ptonini/gha-load-metadata@main
-      - run: docker run -v $(pwd):$(pwd) -w $(pwd) ${GO_BUILDER_IMAGE} go build -o ${PROJECT_NAME} ${GO_MAIN_FILE}
-      - run: sha256sum ${PROJECT_NAME} > SHA256SUMS
+      - run: docker run -v $(pwd):$(pwd) -w $(pwd) ${GO_BUILDER_IMAGE} go build -o ${GO_APP_NAME} ${GO_MAIN_FILE}
+      - run: sha256sum ${GO_APP_NAME} > SHA256SUMS
       - uses: actions/upload-artifact@v3
         with:
           name: application
           path: |
-            ${{ env.PROJECT_NAME }}
+            ${{ env.GO_APP_NAME }}
             SHA256SUMS
       - uses: svenstaro/upload-release-action@v2
         if: inputs.release_created == 'true'
         with:
-          file: ${{ env.PROJECT_NAME }}
+          file: ${{ env.GO_APP_NAME }}
           repo_token: ${{ github.token }}
           tag: ${{ inputs.tag_name }}
       - uses: svenstaro/upload-release-action@v2

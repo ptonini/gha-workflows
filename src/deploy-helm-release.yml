@@ -41,9 +41,9 @@ jobs:
       tags: ${{ format('latest pr{0}', github.event.number) }}
     secrets:
       BUILD_PASSWORD: ${{ secrets.GH_PACKAGES_TOKEN }}
-  deploy_staging:
+  create_staging:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
-    if: needs.startup.outputs.skip_staging == 'false'
+    if: needs.startup.outputs.create_staging == 'true'
     needs:
       - startup
       - publish_candidate
@@ -56,8 +56,8 @@ jobs:
       VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
 
   destroy_staging:
-    uses: ptonini/gha-workflows/.github/workflows/destroy-namespace.yaml@main
-    if: needs.startup.outputs.skip_staging == 'false'
+    uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
+    if: needs.startup.outputs.destroy_staging == 'true'
     needs:
       - startup
     secrets:
@@ -83,10 +83,10 @@ jobs:
     with:
       source_tag: pr-approved
       tag: ${{ needs.startup.outputs.release_version }}
-  deploy_production:
+  deploy_to_production:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     needs:
-      - retag_for_production
+      - promote_candidate
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
