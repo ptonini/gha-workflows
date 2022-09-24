@@ -44,12 +44,12 @@ jobs:
       promote_candidate: ${{ steps.get_metadata.outputs.promote_candidate }}
       create_staging: ${{ steps.get_metadata.outputs.create_staging }}
       destroy_staging: ${{ steps.get_metadata.outputs.destroy_staging }}
-      steps:
-        - run: env | sort
-        - run: jq . ${{ github.event_path }}
-        - uses: actions/checkout@main
-        - uses: ptonini/gha-get-metadata@main
-          id: get_metadata
-          with:
-            github_token: ${{ github.token }}
-            org_config: ${{ secrets.ORG_CONFIG }}
+    steps:
+      - run: env | sort
+      - run: jq . ${{ github.event_path }}
+      - uses: actions/checkout@main
+      - uses: ptonini/gha-get-metadata@main
+        id: get_metadata
+        with:
+          github_token: ${{ github.token }}
+          org_config: ${{ secrets.ORG_CONFIG }}
