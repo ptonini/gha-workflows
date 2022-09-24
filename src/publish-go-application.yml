@@ -22,6 +22,40 @@ jobs:
     secrets:
       ORG_CONFIG: ${{ secrets.ORG_CONFIG }}
    
+  publish_candidate:
+    uses: ptonini/gha-workflows/.github/workflows/build-go-application.yaml@main
+    if: needs.startup.outputs.publish_candidate == 'true'
+    needs:
+      - startup
+
+#  approve_candidate:
+#    uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main
+#    if: needs.startup.outputs.approve_candidate == 'true'
+#    needs:
+#      - startup
+#    with:
+#      source_tag: ${{ format('pr{0}', github.event.pull_request.number) }}
+#      tag: pr-approved
+#
+#  promote_candidate:
+#    uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main
+#    if: needs.startup.outputs.promote_candidate == 'true'
+#    needs:
+#      - startup
+#    with:
+#      source_tag: pr-approved
+#      tag: ${{ needs.startup.outputs.release_version }}
+#
+#
+#  publish_artifact:
+#    uses: ptonini/gha-workflows/.github/workflows/build-go-application.yaml@main
+#    needs:
+#      - startup
+#      - release_please
+#    with:
+#      release_created: ${{ needs.release_please.outputs.release_created }}
+#      tag_name: ${{ needs.release_please.outputs.tag_name }}
+  
   unit_tests:
     uses: ptonini/gha-workflows/.github/workflows/unit-tests.yaml@main
     if: needs.startup.outputs.skip_tests == 'false'
@@ -34,16 +68,7 @@ jobs:
     secrets:
       GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  
-  publish_artifact:
-    uses: ptonini/gha-workflows/.github/workflows/publish-go-application.yaml@main
-    needs:
-      - startup
-      - release_please
-    with:
-      release_created: ${{ needs.release_please.outputs.release_created }}
-      tag_name: ${{ needs.release_please.outputs.tag_name }}
-   
+     
   code_linting:
     uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
     if: needs.startup.outputs.housekeeping == 'true'
