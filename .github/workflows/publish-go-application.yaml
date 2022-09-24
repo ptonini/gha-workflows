@@ -6,9 +6,11 @@ on:
       tag_name:
         description: ''
         required: true
+        type: string
       release_created:
         description: ''
         required: true
+        type: string
   
 jobs:
   publish_go_application:
