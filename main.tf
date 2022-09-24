@@ -1,7 +1,7 @@
 variable "github_token" {}
 
 locals {
-  github_owner  = "nodis-com-br"
+  github_owner = "nodis-com-br"
 }
 
 provider "github" {
@@ -25,6 +25,14 @@ module "workflow_configure_helm_release" {
   owner   = local.github_owner
 }
 
+module "workflow_publish_docker_image" {
+  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  topics  = ["docker-image github-flow"]
+  file    = ".github/workflows/publish.yml"
+  content = file("src/publish-docker-image.yml")
+  owner   = local.github_owner
+}
+
 module "workflow_publish_go_application" {
   source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
   topics  = ["vault-plugin github-flow"]
@@ -33,11 +41,12 @@ module "workflow_publish_go_application" {
   owner   = local.github_owner
 }
 
-module "workflow_publish_docker_image" {
-  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
-  topics  = ["docker-image github-flow"]
-  file    = ".github/workflows/publish.yml"
-  content = file("src/publish-docker-image.yml")
-  owner   = local.github_owner
+module "workflow_publish_python_package" {
+  source   = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  topics   = ["package github-flow", "library github-flow"]
+  language = "python"
+  file     = ".github/workflows/publish.yml"
+  content  = file("src/publish-python-package.yml")
+  owner    = local.github_owner
 }
 

@@ -1,0 +1,40 @@
+name: publish-python-package
+
+on:
+  workflow_call:
+    inputs:
+      tag_name:
+        description: ''
+        required: true
+        type: string
+      release_created:
+        description: ''
+        required: true
+        type: string
+    secrets:
+      PYPI_ADDR:
+        description: ''
+        required: true
+        
+jobs:
+  publish_python_package:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - uses: actions/checkout@main
+      - uses: nodis-com-br/gha-metadata-load@master
+      - run: pip3 install twine
+      - run: python3 setup.py sdist
+      - uses: actions/upload-artifact@v3
+        with:
+          name: package
+          path: dist/**
+      - uses: svenstaro/upload-release-action@v2
+        if: inputs.release_created == 'true'
+        with:
+          file: dist/**
+          file_glob: true
+          repo_token: ${{ github.token }}
+          tag: ${{ inputs.tag_name }}
+      - run: python3 -m twine upload dist/* --verbose --repository-url ${{ secrets.PYPI_ADDR }} --username ${{ github.event.repository.name }} --password ${{ github.token }}
+        if: inputs.release_created == 'true'

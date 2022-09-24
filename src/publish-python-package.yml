@@ -36,13 +36,15 @@ jobs:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   
   publish_artifact:
-    uses: ptonini/gha-workflows/.github/workflows/publish-go-application.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/publish-python-package.yaml@main
     needs:
       - startup
       - release_please
     with:
       release_created: ${{ needs.release_please.outputs.release_created }}
       tag_name: ${{ needs.release_please.outputs.tag_name }}
+    secrets:
+      PYPI_ADDR: ${{ secrets.PYPI_ADDR }}
   
   code_linting:
     uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
