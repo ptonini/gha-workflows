@@ -1,4 +1,4 @@
-name: publish-python-package
+name: publish-lua-rock
 
 on:
   workflow_call:
@@ -11,30 +11,29 @@ on:
         description: ''
         required: true
         type: string
-    secrets:
-      PYPI_ADDR:
-        description: ''
-        required: true
         
 jobs:
-  publish_python_package:
+  publish_lua_rock:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
       - uses: actions/checkout@main
       - uses: ptonini/gha-load-metadata@main
-      - run: pip3 install twine
-      - run: python3 setup.py sdist
+      - uses: leafo/gh-actions-lua@v9
+      - uses: leafo/gh-actions-luarocks@v4
+      - run: echo "ROCK_PREFIX=${{ github.event.repository.name }}-${RELEASE_VERSION}" >> $GITHUB_ENV
+      - run: echo "ROCK_FILE=${ROCK_PREFIX}-0.rockspec" >> $GITHUB_ENV
+      - run: echo "PACKAGE_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
+      - run: cat template.rockspec | envsubst > ${ROCK_FILE}
+      - run: luarocks pack ${ROCK_FILE}
       - uses: actions/upload-artifact@v3
         with:
-          name: package
-          path: dist/**
+          name: luarock
+          path: ${{ env.ROCK_PREFIX }}-0.*
       - uses: svenstaro/upload-release-action@v2
         if: inputs.release_created == 'true'
         with:
-          file: dist/**
+          file: ${{ env.ROCK_PREFIX }}-0.*
           file_glob: true
           repo_token: ${{ github.token }}
           tag: ${{ inputs.tag_name }}
-      - run: python3 -m twine upload dist/* --verbose --repository-url ${{ secrets.PYPI_ADDR }} --username ${{ github.event.repository.name }} --password ${{ github.token }}
-        if: inputs.release_created == 'true'

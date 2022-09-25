@@ -50,3 +50,11 @@ module "workflow_publish_python_package" {
   owner    = local.github_owner
 }
 
+module "workflow_publish_lua_rock" {
+  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  topics  = ["kong-plugin github-flow"]
+  file    = ".github/workflows/publish.yml"
+  content = file("src/publish-lua-rock.yml")
+  owner   = local.github_owner
+}
+
