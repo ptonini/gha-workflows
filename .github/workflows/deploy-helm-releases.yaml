@@ -42,6 +42,7 @@ jobs:
             ${{ env.VAULT_REGISTRY_CREDENTIALS_PATH }} dockerconfigjson | REGISTRY_CREDENTIALS;
             ${{ env.VAULT_K8S_ROLE_PATH }} kube_config | KUBECONFIG_CONTENT;
       - uses: ptonini/gha-prepare-helm-releases@main
+        id: releases
         with:
           github_token: ${{ env.GH_TOKEN }}
           checksum: ${{ inputs.checksum }}
@@ -49,5 +50,7 @@ jobs:
         with:
           name: releases
           path: ${{ github.workspace }}/**
-      - run: echo "${KUBECONFIG_CONTENT}" > kubeconfig && chmod 0600 kubeconfig && echo "KUBECONFIG=kubeconfig" >> ${GITHUB_ENV}
-      - run: for D in */; do source "${D}parameters" && helm -n ${NAMESPACE} --debug upgrade -i --repo ${REPOSITORY} --version ${CHART_VERSION} -f "${D}values.json" --history-max 1 ${RELEASE_NAME} ${CHART} ${HELM_EXTRA_ARGUMENTS}; done
+      - uses: ptonini/gha-deploy-helm-releases@main
+        with:
+          kubeconfig_content: ${{ env.KUBECONFIG_CONTENT }}
+          releases: ${{ steps.releases.outputs.releases }}

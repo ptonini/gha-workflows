@@ -65,28 +65,22 @@ jobs:
       VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
       VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
       VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
-  
-  approve_candidate:
-    uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main
-    if: needs.startup.outputs.approve_candidate == 'true'
+   
+  publish_frontend:
+    uses: ptonini/gha-workflows/.github/workflows/publish-frontend.yaml@main
+    if: needs.release_please.outputs.release_created == 'true'
     needs:
       - startup
+      - release_please
     with:
-      source_tag: ${{ format('pr{0}', github.event.pull_request.number) }}
-      tag: pr-approved
-  
-  promote_candidate:
-    uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main
-    if: needs.startup.outputs.promote_candidate == 'true'
+      tag_name: ${{ needs.release_please.outputs.tag_name }}
+  deploy_frontend:
+    uses: ptonini/gha-workflows/.github/workflows/deploy-frontend.yaml@main
     needs:
-      - startup
+      - publish_frontend
+      - release_please
     with:
-      source_tag: pr-approved
-      tag: ${{ needs.startup.outputs.release_version }}
-  deploy_to_production:
-    uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
-    needs:
-      - promote_candidate
+      tag_name: ${{ needs.release_please.outputs.tag_name }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       VAULT_ADDR: ${{ secrets.VAULT_ADDR }}

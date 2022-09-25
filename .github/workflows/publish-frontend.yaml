@@ -1,0 +1,34 @@
+name: publish-frontend
+
+on:
+  workflow_call:
+    inputs:
+      tag_name:
+        description: ''
+        required: true
+        type: string
+      nodejs_version:
+        type: string
+        description: ''
+        required: false
+        default: '15.14.0'
+  
+jobs:
+  publish_frontend:
+    runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN: ${{ github.token }}
+    steps:
+      - run: env | sort
+      - uses: actions/checkout@main
+      - uses: ptonini/gha-load-metadata@master
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ inputs.nodejs_version }}
+      - run: yarn install --prod && yarn build
+      - run: tar czvf ${ARTIFACT_FILENAME} build
+      - uses: svenstaro/upload-release-action@v2
+        with:
+          file: ${{ env.ARTIFACT_FILENAME }}
+          repo_token: ${{ github.token }}
+          tag: ${{ inputs.tag_name }}

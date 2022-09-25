@@ -1,0 +1,57 @@
+name: deploy-frontend
+
+on:
+  workflow_call:
+    inputs:
+      tag_name:
+        description: ''
+        required: true
+    secrets:
+      openvpn_config:
+        description: ''
+        required: true
+      vault_addr:
+        description: ''
+        required: true
+      vault_approle_role_id:
+        description: ''
+        required: true
+      vault_approle_secret_id:
+        description: ''
+        required: true
+        
+jobs:
+  deploy_frontend:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1
+    steps:
+      - run: env | sort
+      - uses: actions/checkout@main
+      - uses: ptonini/gha-load-metadata@master
+      - uses: nodis-com-br/gha-openvpn@master
+        with:
+          openvpn_config: ${{ secrets.openvpn_config }}
+      - uses: hashicorp/vault-action@v2.3.0
+        with:
+          url: ${{ secrets.vault_addr }}
+          method: approle
+          roleId: ${{ secrets.vault_approle_role_id }}
+          secretId: ${{ secrets.vault_approle_secret_id }}
+          secrets: |
+            ${{ env.VAULT_AWS_ROLE_PATH }} access_key | AWS_ACCESS_KEY_ID;
+            ${{ env.VAULT_AWS_ROLE_PATH }} secret_key | AWS_SECRET_ACCESS_KEY;
+            ${{ env.VAULT_AWS_ROLE_PATH }} security_token | AWS_SESSION_TOKEN;
+      - uses: dsaltares/fetch-gh-release-asset@master
+        with:
+          version: tags/${{ inputs.tag_name }}
+          file: ${{ env.ARTIFACT_FILENAME }}
+          target: ./${{ env.ARTIFACT_FILENAME }}
+      - run: tar xzvf ${ARTIFACT_FILENAME}
+      - run: aws s3 sync --delete --acl public-read build "s3://${BUCKET}/www"
+      - run: |
+          for I in $(echo ${CUSTOM_TYPES} | jq -c '.[]'); do
+            OBJECT=$(echo ${I} | jq -r '.object')
+            aws s3api put-object --bucket ${BUCKET} --key www/${OBJECT} --body build/${OBJECT} --content-type $(echo ${I} | jq -r '."content-type"') --acl public-read
+          done
+      - run: aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/*"

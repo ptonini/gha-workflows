@@ -1,0 +1,23 @@
+name: publish-helm-chart
+
+on:
+  workflow_call:
+    secrets:
+      charts_addr:
+        description: ''
+        required: true
+
+jobs:
+  publish_chart:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - uses: actions/checkout@main
+      - uses: ptonini/gha-load-metadata@master
+      - run: helm dependencies up && helm package
+      - run: curl --data-binary "@${NODIS_ARTIFACT_NAME}" https://${NODIS_REPOSITORY_NAME}:${{ github.token }}@${{ secrets.charts_addr }}/api/charts
+      - uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ github.token }}
+          file: ${{ env.NODIS_ARTIFACT_NAME }}
+          tag: v${{ env.NODIS_PROJECT_VERSION }}
