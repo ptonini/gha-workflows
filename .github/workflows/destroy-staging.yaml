@@ -1,4 +1,4 @@
-name: destroy-namespace
+name: destroy-staging
 
 on:
   workflow_call:
@@ -20,7 +20,7 @@ env:
   AWS_REGION: us-east-1
 
 jobs:
-  destroy_namespace:
+  destroy_staging:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
@@ -36,10 +36,10 @@ jobs:
           roleId: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
           secretId: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
           secrets: |
-            ${{ env.K8S_ROLE_PATH }} kube_config | KUBECONFIG_CONTENT;
-            ${{ env.AWS_ROLE_PATH }} access_key | AWS_ACCESS_KEY_ID;
-            ${{ env.AWS_ROLE_PATH }} secret_key | AWS_SECRET_ACCESS_KEY;
-            ${{ env.AWS_ROLE_PATH }} security_token | AWS_SESSION_TOKEN;
+            ${{ env.VAULT_K8S_ROLE_PATH }} kube_config | KUBECONFIG_CONTENT;
+            ${{ env.VAULT_AWS_ROLE_PATH }} access_key | AWS_ACCESS_KEY_ID;
+            ${{ env.VAULT_AWS_ROLE_PATH }} secret_key | AWS_SECRET_ACCESS_KEY;
+            ${{ env.VAULT_AWS_ROLE_PATH }} security_token | AWS_SESSION_TOKEN;
       - run: echo "${KUBECONFIG_CONTENT}" > kubeconfig && chmod 0600 kubeconfig && echo "KUBECONFIG=kubeconfig" >> ${GITHUB_ENV}
       - run: helm --namespace ${NAMESPACE} list --short | xargs -r helm uninstall --namespace ${NAMESPACE}
       - run: kubectl delete all --all --namespace ${NAMESPACE}
