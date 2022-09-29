@@ -28,7 +28,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
-      - run: echo '${{ secrets.ORG_CONFIG }}' | jq
       - uses: actions/checkout@v2
       - run: echo "ENVIRONMENT=$(echo ${{ inputs.release }} | awk -F_ '{print $1}')" >> $GITHUB_ENV
       - run: echo "NAMESPACE=$(echo ${{ inputs.release }} | awk -F_ '{print $2}')" >> $GITHUB_ENV
