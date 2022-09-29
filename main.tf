@@ -57,4 +57,3 @@ module "workflow_publish_lua_rock" {
   content = file("src/publish-lua-rock.yml")
   owner   = local.github_owner
 }
-

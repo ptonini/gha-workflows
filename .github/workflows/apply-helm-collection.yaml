@@ -1,0 +1,51 @@
+name: apply-helm-release
+
+on:
+  workflow_call:
+    inputs:
+      release:
+        description: ''
+        default: ''
+        type: string
+    secrets:
+      ORG_CONFIG:
+        description: ''
+        required: true
+      OPENVPN_CONFIG:
+        description: ''
+        required: true
+      VAULT_ADDR:
+        description: ''
+        required: true
+      VAULT_APPROLE_ROLE_ID:
+        description: ''
+        required: true
+      VAULT_APPROLE_SECRET_ID:
+        description: ''
+        required: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - uses: actions/checkout@v2
+      - run: echo "ENVIRONMENT=$(echo ${{ inputs.release }} | awk -F_ '{print $1}')" >> $GITHUB_ENV
+      - run: echo "NAMESPACE=$(echo ${{ inputs.release }} | awk -F_ '{print $2}')" >> $GITHUB_ENV
+      - run: echo "RELEASE=$(echo ${{ inputs.release }} | awk -F_ '{print $3}')" >> $GITHUB_ENV
+      - run: echo "VAULT_K8S_ROLE_PATH=$(echo ${{ secrets.ORG_CONFIG }} | jq -r '.environments.'${ENVIRONMENT}'.k8s_role_path')" >> $GITHUB_ENV
+      - uses: ptonini/gha-openvpn@main
+        with:
+          openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
+          validation_addr: ${{ secrets.VAULT_ADDR }}
+      - uses: hashicorp/vault-action@v2.3.0
+        with:
+          method: approle
+          url: ${{ secrets.VAULT_ADDR }}
+          roleId: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+          secrets: ${{ env.VAULT_K8S_ROLE_PATH }} kube_config | KUBECONFIG_CONTENT;
+      - uses: ptonini/gha-deploy-helm-releases@main
+        with:
+          base_dir: ${{ github.workspace }}/${{ env.ENVIRONMENT }}/${{ env.NAMESPACE }}
+          kubeconfig_content: ${{ env.KUBECONFIG_CONTENT }}
+          releases: ${{ env.RELEASE }}
