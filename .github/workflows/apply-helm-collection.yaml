@@ -32,7 +32,7 @@ jobs:
       - run: echo "ENVIRONMENT=$(echo ${{ inputs.release }} | awk -F_ '{print $1}')" >> $GITHUB_ENV
       - run: echo "NAMESPACE=$(echo ${{ inputs.release }} | awk -F_ '{print $2}')" >> $GITHUB_ENV
       - run: echo "RELEASE=$(echo ${{ inputs.release }} | awk -F_ '{print $3}')" >> $GITHUB_ENV
-      - run: echo "VAULT_K8S_ROLE_PATH=$(echo ${{ secrets.ORG_CONFIG }} | jq -r '.environments.'${ENVIRONMENT}'.k8s_role_path')" >> $GITHUB_ENV
+      - run: echo "VAULT_K8S_ROLE_PATH=$(echo '${{ secrets.ORG_CONFIG }}' | jq -r '.environments.'${ENVIRONMENT}'.k8s_role_path')" >> $GITHUB_ENV
       - uses: ptonini/gha-openvpn@main
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
