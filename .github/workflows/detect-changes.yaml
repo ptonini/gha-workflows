@@ -2,11 +2,6 @@ name: detect-changes
 
 on:
   workflow_call:
-    inputs:
-      filters:
-        description: ''
-        required: true
-        type: string
     outputs:
       changes:
         description: ''
@@ -22,7 +17,8 @@ jobs:
       - run: env | sort
       - run: jq . ${{ github.event_path }}
       - uses: actions/checkout@main
+      - run: bash build_filters > filters.yaml
       - uses: dorny/paths-filter@v2
         id: filter
         with:
-          filters: ${{ inputs.filters }}
+          filters: filters.yaml
