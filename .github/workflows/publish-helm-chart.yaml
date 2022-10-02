@@ -2,22 +2,26 @@ name: publish-helm-chart
 
 on:
   workflow_call:
-    secrets:
-      charts_addr:
+    inputs:
+      chart:
         description: ''
         required: true
+        type: string
 
+        
 jobs:
-  publish_chart:
+  publish:
     runs-on: ubuntu-latest
     steps:
-      - run: env | sort
       - uses: actions/checkout@main
-      - uses: ptonini/gha-load-metadata@master
-      - run: helm dependencies up && helm package
-      - run: curl --data-binary "@${NODIS_ARTIFACT_NAME}" https://${NODIS_REPOSITORY_NAME}:${{ github.token }}@${{ secrets.charts_addr }}/api/charts
+      - run: echo CHART_VERSION=$(helm show chart charts/${{ inputs.chart }} | grep -e '^version' | awk '{print $2}') >> $GITHUB_ENV
+      - run: helm package --dependency-update charts/${{ inputs.chart }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: builds
+          path: ${{ inputs.chart }}-${{ env.CHART_VERSION }}.tgz
       - uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ github.token }}
-          file: ${{ env.NODIS_ARTIFACT_NAME }}
-          tag: v${{ env.NODIS_PROJECT_VERSION }}
+          file: ${{ inputs.chart }}-${{ env.CHART_VERSION }}.tgz
+          tag: ${{ inputs.chart }}-v${{ env.CHART_VERSION }}

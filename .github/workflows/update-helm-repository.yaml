@@ -1,0 +1,26 @@
+name: update-helm-repository
+
+on:
+  workflow_call:
+
+jobs:
+  update_helm_repository:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v3
+        with:
+          name: builds
+          path: ${{ github.workspace}}/builds
+      - uses: dawidd6/action-git-user-config@v1
+      - uses: helm/chart-releaser-action@v1.4.1
+        with:
+          install_only: true
+      - run: cr index -p builds -i index.yaml --push
+        env:
+          CR_TOKEN: ${{ github.token}}
+          CR_OWNER: ${{ github.event.repository.owner.name }}
+          CR_GIT_REPO: ${{ github.event.repository.name }}
+          CR_RELEASE_NAME_TEMPLATE: "{{ .Name }}-v{{ .Version }}"

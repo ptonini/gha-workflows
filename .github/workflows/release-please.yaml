@@ -6,6 +6,9 @@ on:
       release_created:
         description: ''
         value: ${{ jobs.release_please.outputs.release_created }}
+      releases_created:
+        description: ''
+        value: ${{ jobs.release_please.outputs.releases_created }}
       tag_name:
         description: ''
         value: ${{ jobs.release_please.outputs.tag_name }}
@@ -15,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
+      releases_created: ${{ steps.release.outputs.releases_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - run: env | sort
@@ -25,3 +29,4 @@ jobs:
         id: release
         with:
           command: manifest
+      - run: echo '${{ toJson(steps.release.outputs) }}'
