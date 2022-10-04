@@ -50,8 +50,8 @@ jobs:
       - run: tar xzvf ${ARTIFACT_FILENAME}
       - run: aws s3 sync --delete --acl public-read build "s3://${BUCKET}/www"
       - run: |
-          for I in $(echo ${CUSTOM_TYPES} | jq -c '.[]'); do
-            OBJECT=$(echo ${I} | jq -r '.object')
-            aws s3api put-object --bucket ${BUCKET} --key www/${OBJECT} --body build/${OBJECT} --content-type $(echo ${I} | jq -r '."content-type"') --acl public-read
+          for I in $(jq -c '.[]' <<< "${CUSTOM_TYPES}"); do
+            OBJECT=$(jq -r '.object' <<< "${I}")
+            aws s3api put-object --bucket ${BUCKET} --key www/${OBJECT} --body build/${OBJECT} --content-type $(jq -r '."content-type"' <<< "${I}") --acl public-read
           done
       - run: aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/*"
