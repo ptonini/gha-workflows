@@ -57,3 +57,19 @@ module "workflow_publish_lua_rock" {
   content = file("src/publish-lua-rock.yml")
   owner   = local.github_owner
 }
+
+#module "workflow_publish_helm_charts" {
+#  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+#  topics  = ["helm-repository github-flow"]
+#  file    = ".github/workflows/publish.yml"
+#  content = file("src/publish-helm-charts.yml")
+#  owner   = "ptonini"
+#}
+
+#module "workflow_apply_helm_collection" {
+#  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+#  topics  = ["helm-collection github-flow"]
+#  file    = ".github/workflows/apply.yml"
+#  content = file("src/apply-helm-collection.yml")
+#  owner   = local.github_owner
+#}

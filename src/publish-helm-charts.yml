@@ -1,0 +1,33 @@
+name: publish
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - charts/**
+
+jobs:
+  release_please:
+    uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
+    if: github.event_name == 'push'
+
+  detect_changes:
+    uses: ptonini/gha-workflows/.github/workflows/detect-changes.yaml@main
+    
+  publish:
+    uses: ptonini/gha-workflows/.github/workflows/publish-helm-chart.yaml@main
+    if: needs.release_please.outputs.releases_created == 'true'
+    needs:
+      - detect_changes
+      - release_please
+    strategy:
+      matrix:
+        chart: ${{ fromJSON(needs.detect_changes.outputs.changes) }}
+    with:
+      chart: ${{ matrix.chart }}
+
+  update_repository:
+    uses: ptonini/gha-workflows/.github/workflows/update-helm-repository.yaml@main
+    needs:
+      - publish

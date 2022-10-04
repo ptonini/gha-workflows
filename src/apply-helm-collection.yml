@@ -1,0 +1,28 @@
+name: apply-helm-collection
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  detect_changes:
+    uses: ptonini/gha-workflows/.github/workflows/detect-changes.yaml@main
+  
+  apply_release:
+    uses: ptonini/gha-workflows/.github/workflows/apply-helm-release.yaml@main
+    if: needs.detect_changes.outputs.changes != '[]'
+    needs:
+      - detect_changes
+    strategy:
+      matrix:
+        release: ${{ fromJSON(needs.detect_changes.outputs.changes) }}
+    with:
+      release: ${{ matrix.release }}
+    secrets:
+      ORG_CONFIG: ${{ secrets.ORG_CONFIG }}
+      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
+      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}

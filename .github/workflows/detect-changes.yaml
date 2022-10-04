@@ -7,7 +7,6 @@ on:
         description: ''
         value: ${{ jobs.detect_changes.outputs.changes }}
 
-        
 jobs:
   detect_changes:
     runs-on: ubuntu-latest
@@ -17,7 +16,7 @@ jobs:
       - run: env | sort
       - run: jq . ${{ github.event_path }}
       - uses: actions/checkout@main
-      - run: bash build_filters > filters.yaml
+      - run: '[[ -e ./filters.yaml ]] || bash build_filters > filters.yaml'
       - uses: dorny/paths-filter@v2
         id: filter
         with:

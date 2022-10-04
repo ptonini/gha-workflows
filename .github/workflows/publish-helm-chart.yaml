@@ -15,7 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@main
       - run: echo CHART_VERSION=$(helm show chart charts/${{ inputs.chart }} | grep -e '^version' | awk '{print $2}') >> $GITHUB_ENV
-      - run: helm package --dependency-update charts/${{ inputs.chart }}
+      - run: helm dependency build charts/${{ inputs.chart }}
+      - run: helm package charts/${{ inputs.chart }}
       - uses: actions/upload-artifact@v3
         with:
           name: builds
