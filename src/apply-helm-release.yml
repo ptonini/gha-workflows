@@ -1,7 +1,7 @@
-name: configure
+name: apply
 
 concurrency:
-  group: configure
+  group: apply
 
 on:
   workflow_dispatch: ~
@@ -11,7 +11,7 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/startup.yaml@main
     secrets:
       ORG_CONFIG: ${{ secrets.ORG_CONFIG }}
-  apply_helm_release:
+  apply_release:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     needs:
       - startup

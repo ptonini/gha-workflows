@@ -1,16 +1,19 @@
-name: apply-helm-collection
+name: apply
 
 on:
   push:
     branches:
       - main
       - master
+    paths-ignore:
+      - '.github/**'
+      - '*/*'
 
 jobs:
   detect_changes:
     uses: ptonini/gha-workflows/.github/workflows/detect-changes.yaml@main
   
-  apply_release:
+  apply_releases:
     uses: ptonini/gha-workflows/.github/workflows/apply-helm-release.yaml@main
     if: needs.detect_changes.outputs.changes != '[]'
     needs:

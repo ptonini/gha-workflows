@@ -17,11 +17,11 @@ module "workflow_deploy_helm_release" {
   owner   = local.github_owner
 }
 
-module "workflow_configure_helm_release" {
+module "workflow_apply_helm_release" {
   source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
   topics  = ["helm-release github-flow"]
-  file    = ".github/workflows/configure.yml"
-  content = file("src/configure-helm-release.yml")
+  file    = ".github/workflows/apply.yml"
+  content = file("src/apply-helm-release.yml")
   owner   = local.github_owner
 }
 
