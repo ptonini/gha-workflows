@@ -66,10 +66,10 @@ module "workflow_publish_lua_rock" {
 #  owner   = "ptonini"
 #}
 
-#module "workflow_apply_helm_collection" {
-#  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
-#  topics  = ["helm-collection github-flow"]
-#  file    = ".github/workflows/apply.yml"
-#  content = file("src/apply-helm-collection.yml")
-#  owner   = local.github_owner
-#}
+module "workflow_apply_helm_collection" {
+  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  topics  = ["helm-collection github-flow"]
+  file    = ".github/workflows/apply.yml"
+  content = file("src/apply-helm-collection.yml")
+  owner   = local.github_owner
+}
