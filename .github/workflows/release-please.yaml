@@ -33,5 +33,12 @@ jobs:
         id: release
         with:
           command: manifest
-      - run: echo "::set-output name=full_output::'${{ toJson(steps.release.outputs) }}'"
-        id: full_output
+      - id: full_output  
+        run: |
+            content="${{ toJSON(steps.release.outputs) }}"
+            # the following lines are only required for multi line json
+            content="${content//'%'/'%25'}"
+            content="${content//$'\n'/'%0A'}"
+            content="${content//$'\r'/'%0D'}"
+            # end of optional handling for multi line json
+            echo "::set-output name=full_output::$content"
