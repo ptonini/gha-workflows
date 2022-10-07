@@ -12,6 +12,11 @@ on:
       tag_name:
         description: ''
         value: ${{ jobs.release_please.outputs.tag_name }}
+      paths_released:
+        description: ''
+        value: ${{ jobs.release_please.outputs.paths_released }}
+      
+      
 
 jobs:
   release_please:
@@ -20,6 +25,7 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       releases_created: ${{ steps.release.outputs.releases_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
+      paths_released: ${{ steps.release.outputs.paths_released }}
     steps:
       - run: env | sort
       - uses: actions/checkout@main
@@ -29,7 +35,7 @@ jobs:
         id: release
         with:
           command: manifest
-      - run: echo '${{ toJson(steps.release.outputs) }}' > outputs
+      - run: echo '${{ toJson(steps.release.outputs) }}' | tee outputs
       - uses: actions/upload-artifact@v2
         with:
           name: release-please-outputs
