@@ -3,6 +3,11 @@ name: publish-docker-image
 on:
   workflow_call:
     inputs:
+      path:
+        description: ''
+        required: false
+        default: ${{ github.workspace }}
+        type: string
       tags:
         description: ''
         required: true
@@ -48,7 +53,7 @@ jobs:
           registry: ${{ inputs.registry }}
           username: ${{ env.REGISTRY_USERNAME }}
           password: ${{ env.REGISTRY_PASSWORD }}
-      - run: docker build . -t ${DOCKER_IMAGE_NAME} --build-arg BUILD_USERNAME=${BUILD_USERNAME} --build-arg BUILD_PASSWORD=${BUILD_PASSWORD}
+      - run: docker build ${{ inputs.path }} -t ${DOCKER_IMAGE_NAME} --build-arg BUILD_USERNAME=${BUILD_USERNAME} --build-arg BUILD_PASSWORD=${BUILD_PASSWORD}
       - run: for TAG in ${{ inputs.tags }}; do docker tag ${DOCKER_IMAGE_NAME} ${DOCKER_IMAGE_NAME}:${TAG} && docker push ${DOCKER_IMAGE_NAME}:${TAG}; done
       - run: echo "::set-output name=checksum::$(docker inspect --format='{{index .RepoDigests 0}}' "${DOCKER_IMAGE_NAME}" | cut -d ':' -f 2)"
         id: checksum

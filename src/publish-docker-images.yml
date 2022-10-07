@@ -1,4 +1,4 @@
-name: apply
+name: publish
 
 on:
   push:
@@ -14,15 +14,15 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/detect-changes.yaml@main
   
   apply_releases:
-    uses: ptonini/gha-workflows/.github/workflows/apply-helm-release.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
     if: needs.detect_changes.outputs.changes != '[]'
     needs:
       - detect_changes
     strategy:
       matrix:
-        release: ${{ fromJSON(needs.detect_changes.outputs.changes) }}
+        path: ${{ fromJSON(needs.detect_changes.outputs.changes) }}
     with:
-      release: ${{ matrix.release }}
+      path: ${{ format('{1}/{2}', github.workspace, matrix.path }}
     secrets:
       ORG_CONFIG: ${{ secrets.ORG_CONFIG }}
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
