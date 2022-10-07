@@ -18,7 +18,7 @@ jobs:
           reports_folder: ${{ env.REPORTS_FOLDER }}
           coverage_profile: ${{ env.GO_COVERAGE_PROFILE }}
           test_report: ${{ env.GO_TEST_REPORT }}
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: ${{ env.REPORTS_FOLDER }}
           path: ${{ env.REPORTS_FOLDER }}

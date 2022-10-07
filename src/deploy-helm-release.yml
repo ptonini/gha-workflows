@@ -38,9 +38,9 @@ jobs:
     needs:
       - startup
     with:
+      repository: ${{ needs.startup.outputs.docker_repository }}
       tags: ${{ format('latest pr{0}', github.event.number) }}
-    secrets:
-      BUILD_PASSWORD: ${{ secrets.GH_PACKAGES_TOKEN }}
+      build_arguments: --build-arg BUILD_USERNAME=${{ github.actor }} --build-arg BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
   create_staging:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     if: needs.startup.outputs.create_staging == 'true'

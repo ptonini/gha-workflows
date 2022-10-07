@@ -3,31 +3,16 @@ name: publish-docker-image
 on:
   workflow_call:
     inputs:
-      path:
+      repository:
         description: ''
-        required: false
-        default: ${{ github.workspace }}
+        required: true
         type: string
       tags:
         description: ''
         required: true
         type: string
-      registry:
-        description: ''
-        required: false
-        default: ghcr.io
-        type: string
     secrets:
-      REGISTRY_USERNAME:
-        description: ''
-        required: false
-      REGISTRY_PASSWORD:
-        description: ''
-        required: false
-      BUILD_USERNAME:
-        description: ''
-        required: false
-      BUILD_PASSWORD:
+      BUILD_ARGUMENTS:
         description: ''
         required: false
     outputs:
@@ -39,21 +24,13 @@ jobs:
   publish_docker_image:
     runs-on: ubuntu-latest
     outputs:
-      checksum: ${{ steps.checksum.outputs.checksum }}
+      checksum: ${{ steps.publish_image.outputs.checksum }}
     steps:
       - run: env | sort
       - uses: actions/checkout@main
-      - uses: ptonini/gha-load-metadata@main
-      - run: echo "REGISTRY_USERNAME=$([[ -n "${{ secrets.REGISTRY_USERNAME }}" ]] && echo "${{ secrets.REGISTRY_USERNAME }}" || echo "${{ github.actor }}")" >> $GITHUB_ENV
-      - run: echo "REGISTRY_PASSWORD=$([[ -n "${{ secrets.REGISTRY_PASSWORD }}" ]] && echo "${{ secrets.REGISTRY_PASSWORD }}" || echo "${{ secrets.GITHUB_TOKEN }}")" >> $GITHUB_ENV
-      - run: echo "BUILD_USERNAME=$([[ -n "${{ secrets.BUILD_USERNAME }}" ]] && echo "${{ secrets.BUILD_USERNAME }}" || echo "${{ github.actor }}")" >> $GITHUB_ENV
-      - run: echo "BUILD_PASSWORD=$([[ -n "${{ secrets.BUILD_PASSWORD }}" ]] && echo "${{ secrets.BUILD_PASSWORD }}" || echo "${{ secrets.GITHUB_TOKEN }}")" >> $GITHUB_ENV
-      - uses: docker/login-action@v1
+      - uses: ptonini/gha-publish-docker-image@main
+        id: publish_image
         with:
-          registry: ${{ inputs.registry }}
-          username: ${{ env.REGISTRY_USERNAME }}
-          password: ${{ env.REGISTRY_PASSWORD }}
-      - run: docker build ${{ inputs.path }} -t ${DOCKER_IMAGE_NAME} --build-arg BUILD_USERNAME=${BUILD_USERNAME} --build-arg BUILD_PASSWORD=${BUILD_PASSWORD}
-      - run: for TAG in ${{ inputs.tags }}; do docker tag ${DOCKER_IMAGE_NAME} ${DOCKER_IMAGE_NAME}:${TAG} && docker push ${DOCKER_IMAGE_NAME}:${TAG}; done
-      - run: echo "::set-output name=checksum::$(docker inspect --format='{{index .RepoDigests 0}}' "${DOCKER_IMAGE_NAME}" | cut -d ':' -f 2)"
-        id: checksum
+          repository: ${{ inputs.repository }}
+          tags: ${{ inputs.tag }}
+          build_arguments: ${{ secrets.BUILD_ARGUMENTS }}

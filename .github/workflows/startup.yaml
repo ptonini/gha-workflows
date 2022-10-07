@@ -31,6 +31,9 @@ on:
       destroy_staging:
         description: ''
         value: ${{ jobs.startup.outputs.destroy_staging }}
+      docker_repository:
+        description: ''
+        value: ${{ jobs.startup.outputs.docker_repository }}
 
 jobs:
   startup:
@@ -44,6 +47,7 @@ jobs:
       promote_candidate: ${{ steps.get_metadata.outputs.promote_candidate }}
       create_staging: ${{ steps.get_metadata.outputs.create_staging }}
       destroy_staging: ${{ steps.get_metadata.outputs.destroy_staging }}
+      docker_repository: ${{ steps.get_metadata.outputs.docker_repository }}
     steps:
       - run: env | sort
       - run: jq . ${{ github.event_path }}
