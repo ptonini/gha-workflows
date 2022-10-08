@@ -1,0 +1,17 @@
+{
+  "releases_created": "true",
+  "workload--release_created": "true",
+  "workload--name": "workload: v1.3.0",
+  "workload--tag_name": "workload-v1.3.0",
+  "workload--sha": "8c6c08c1d1589db1a71a625adff6fa6d0b8ffa24",
+  "workload--body": "## [1.3.0](https://github.com/ptonini/helm-charts/compare/workload-v1.2.0...workload-v1.3.0) (2022-10-08)\n\n\n### Features\n\n* **workflow:** updated lib-default to 1.4.0, refactored values.yaml ([3cd985e](https://github.com/ptonini/helm-charts/commit/3cd985e176b861e94f37a81e06515864c743c7ad))",
+  "workload--html_url": "https://github.com/ptonini/helm-charts/releases/tag/workload-v1.3.0",
+  "workload--draft": "false",
+  "workload--upload_url": "https://uploads.github.com/repos/ptonini/helm-charts/releases/79344788/assets{?name,label}",
+  "workload--path": "charts/workload",
+  "workload--version": "1.3.0",
+  "workload--major": "1",
+  "workload--minor": "3",
+  "workload--patch": "0",
+  "paths_released": "[\"charts/workload\"]"
+}
