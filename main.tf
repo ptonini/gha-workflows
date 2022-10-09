@@ -1,20 +1,32 @@
 variable "github_token" {}
 
 locals {
-  github_owner = "nodis-com-br"
+  nodis   = "nodis-com-br"
+  ptonini = "ptonini"
 }
 
 provider "github" {
-  owner = local.github_owner
+  alias = "nodis"
+  owner = local.nodis
   token = var.github_token
 }
+
+provider "github" {
+  alias = "ptonini"
+  owner = local.ptonini
+  token = var.github_token
+}
+
 
 module "workflow_deploy_helm_release" {
   source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
   topics  = ["helm-release github-flow"]
   file    = ".github/workflows/deploy.yml"
   content = file("src/deploy-helm-release.yml")
-  owner   = local.github_owner
+  owner   = local.nodis
+  providers = {
+    github = github.nodis
+  }
 }
 
 module "workflow_apply_helm_release" {
@@ -22,7 +34,10 @@ module "workflow_apply_helm_release" {
   topics  = ["helm-release github-flow"]
   file    = ".github/workflows/apply.yml"
   content = file("src/apply-helm-release.yml")
-  owner   = local.github_owner
+  owner   = local.nodis
+  providers = {
+    github = github.nodis
+  }
 }
 
 module "workflow_publish_docker_image" {
@@ -30,7 +45,10 @@ module "workflow_publish_docker_image" {
   topics  = ["docker-image github-flow"]
   file    = ".github/workflows/publish.yml"
   content = file("src/publish-docker-image.yml")
-  owner   = local.github_owner
+  owner   = local.nodis
+  providers = {
+    github = github.nodis
+  }
 }
 
 module "workflow_publish_go_application" {
@@ -38,7 +56,10 @@ module "workflow_publish_go_application" {
   topics  = ["vault-plugin github-flow"]
   file    = ".github/workflows/publish.yml"
   content = file("src/publish-go-application.yml")
-  owner   = local.github_owner
+  owner   = local.nodis
+  providers = {
+    github = github.nodis
+  }
 }
 
 module "workflow_publish_python_package" {
@@ -47,7 +68,10 @@ module "workflow_publish_python_package" {
   language = "python"
   file     = ".github/workflows/publish.yml"
   content  = file("src/publish-python-package.yml")
-  owner    = local.github_owner
+  owner    = local.nodis
+  providers = {
+    github = github.nodis
+  }
 }
 
 module "workflow_publish_lua_rock" {
@@ -55,21 +79,31 @@ module "workflow_publish_lua_rock" {
   topics  = ["kong-plugin github-flow"]
   file    = ".github/workflows/publish.yml"
   content = file("src/publish-lua-rock.yml")
-  owner   = local.github_owner
+  owner   = local.nodis
+  providers = {
+    github = github.nodis
+  }
 }
 
-#module "workflow_publish_helm_charts" {
-#  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
-#  topics  = ["helm-repository github-flow"]
-#  file    = ".github/workflows/publish.yml"
-#  content = file("src/publish-helm-charts.yml")
-#  owner   = "ptonini"
-#}
-
-module "workflow_apply_helm_collection" {
+module "workflow_publish_helm_monorepo" {
   source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
-  topics  = ["helm-collection github-flow"]
-  file    = ".github/workflows/apply.yml"
-  content = file("src/apply-helm-collection.yml")
-  owner   = local.github_owner
+  topics  = ["helm-charts github-flow"]
+  file    = ".github/workflows/publish.yml"
+  content = file("src/publish-helm-monorepo.yml")
+  owner   = local.ptonini
+  providers = {
+    github = github.ptonini
+  }
 }
+
+module "workflow_publish_docker_monorepo" {
+  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  topics  = ["docker-images github-flow"]
+  file    = ".github/workflows/publish.yml"
+  content = file("src/publish-docker-monorepo.yml")
+  owner   = local.ptonini
+  providers = {
+    github = github.ptonini
+  }
+}
+

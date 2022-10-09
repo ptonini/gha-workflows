@@ -1,0 +1,32 @@
+name: publish
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '*/*'
+
+jobs:
+  release_please:
+    uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
+    if: github.event_name == 'push'
+  
+  publish:
+    runs-on: ubuntu-latest
+    if: needs.release_please.outputs.paths_released != '[]'
+    needs:
+      - release_please
+    strategy:
+      matrix:
+        path: ${{ fromJSON(needs.release_please.outputs.paths_released) }}
+    steps:
+      - run: env | sort
+      - uses: actions/checkout@main
+      - uses: actions/download-artifact@v2
+      - run: echo "VERSION=$(jq -r --arg A "${{ matrix.path }}--version" '.[$A]' outputs)" >> $GITHUB_ENV
+      - uses: ptonini/gha-publish-docker-image@main
+        with:
+          repository: ${{ secrets.REPOSITORY_PREFIX }}/${{ inputs.path }}
+          tags: latest ${{ env.VERSION }}
+          path: ${{ github.workspace }}/${{ inputs.path }}

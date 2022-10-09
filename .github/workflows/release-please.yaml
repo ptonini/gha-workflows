@@ -15,7 +15,9 @@ on:
       paths_released:
         description: ''
         value: ${{ jobs.release_please.outputs.paths_released }}
-      
+      full_output:
+        description: ''
+        value: ${{ jobs.release_please.outputs.full_output }}
       
 
 jobs:
@@ -26,6 +28,7 @@ jobs:
       releases_created: ${{ steps.release.outputs.releases_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
       paths_released: ${{ steps.release.outputs.paths_released }}
+      full_output: ${{ toJson(steps.release.outputs) }}
     steps:
       - run: env | sort
       - uses: actions/checkout@main
