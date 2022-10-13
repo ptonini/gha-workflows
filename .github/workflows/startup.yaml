@@ -50,7 +50,6 @@ jobs:
       docker_repository: ${{ steps.get_metadata.outputs.docker_repository }}
     steps:
       - run: env | sort
-      - run: jq . ${{ github.event_path }}
       - uses: actions/checkout@main
       - uses: ptonini/gha-get-metadata@main
         id: get_metadata

@@ -6,6 +6,7 @@ on:
       tag_name:
         description: ''
         required: true
+        type: string
     secrets:
       openvpn_config:
         description: ''
@@ -29,7 +30,7 @@ jobs:
       - run: env | sort
       - uses: actions/checkout@main
       - uses: ptonini/gha-load-metadata@master
-      - uses: nodis-com-br/gha-openvpn@master
+      - uses: ptonini/gha-openvpn@master
         with:
           openvpn_config: ${{ secrets.openvpn_config }}
       - uses: hashicorp/vault-action@v2.3.0

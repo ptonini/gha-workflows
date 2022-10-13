@@ -37,7 +37,7 @@ jobs:
           registry: ${{ inputs.registry }}
           username: ${{ env.USERNAME }}
           password: ${{ env.PASSWORD }}
-      - run: docker pull ${DOCKER_IMAGE_NAME}:${{ inputs.source_tag }}
-      - run: docker tag ${DOCKER_IMAGE_NAME}:${{ inputs.source_tag }} ${DOCKER_IMAGE_NAME}:${{ inputs.tag }}
-      - run: docker push ${DOCKER_IMAGE_NAME}:${{ inputs.tag }}
+      - run: docker pull ${DOCKER_REPOSITORY}:${{ inputs.source_tag }}
+      - run: docker tag ${DOCKER_REPOSITORY}:${{ inputs.source_tag }} ${DOCKER_REPOSITORY}:${{ inputs.tag }}
+      - run: docker push ${DOCKER_REPOSITORY}:${{ inputs.tag }}
 

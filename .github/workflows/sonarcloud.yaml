@@ -19,7 +19,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ptonini/gha-load-metadata@main
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: ${{ env.REPORTS_FOLDER }}
       - uses: SonarSource/sonarcloud-github-action@master

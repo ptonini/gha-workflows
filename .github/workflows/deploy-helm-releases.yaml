@@ -5,7 +5,7 @@ on:
     inputs:
       checksum:
         description: ''
-        default: ''
+        required: false
         type: string
     secrets:
       OPENVPN_CONFIG:

@@ -27,6 +27,6 @@ jobs:
       - run: echo "VERSION=$(jq -r --arg A "${{ matrix.path }}--version" '.[$A]' outputs)" >> $GITHUB_ENV
       - uses: ptonini/gha-publish-docker-image@main
         with:
-          repository: ${{ secrets.REPOSITORY_PREFIX }}/${{ inputs.path }}
+          repository: ${{ secrets.REPOSITORY_PREFIX }}/${{ matrix.path }}
           tags: latest ${{ env.VERSION }}
-          path: ${{ github.workspace }}/${{ inputs.path }}
+          path: ${{ github.workspace }}/${{ matrix.path }}

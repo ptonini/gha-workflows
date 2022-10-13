@@ -32,5 +32,5 @@ jobs:
         id: publish_image
         with:
           repository: ${{ inputs.repository }}
-          tags: ${{ inputs.tag }}
+          tags: ${{ inputs.tags }}
           build_arguments: ${{ secrets.BUILD_ARGUMENTS }}

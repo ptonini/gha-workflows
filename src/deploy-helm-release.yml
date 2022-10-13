@@ -14,6 +14,7 @@ on:
   pull_request:
     types:
       - opened
+      - reopened
       - synchronize
       - closed
     branches:
@@ -40,7 +41,8 @@ jobs:
     with:
       repository: ${{ needs.startup.outputs.docker_repository }}
       tags: ${{ format('latest pr{0}', github.event.number) }}
-      build_arguments: --build-arg BUILD_USERNAME=${{ github.actor }} --build-arg BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
+    secrets:
+      BUILD_ARGUMENTS: --build-arg BUILD_USERNAME=${{ github.actor }} --build-arg BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
   create_staging:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     if: needs.startup.outputs.create_staging == 'true'
