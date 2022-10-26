@@ -7,7 +7,7 @@ on:
       - master
     paths-ignore:
       - '.github/**'
-      - '*'
+      - '*/*'
 
 jobs:
   detect_changes:
@@ -23,4 +23,9 @@ jobs:
         release: ${{ fromJSON(needs.detect_changes.outputs.changes) }}
     with:
       release: ${{ matrix.release }}
-    secrets: inherit
+    secrets:
+      ORG_CONFIG: ${{ secrets.ORG_CONFIG }}
+      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
+      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}

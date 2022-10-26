@@ -23,7 +23,9 @@ jobs:
     steps:
       - run: env | sort
       - uses: actions/checkout@main
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
+        with:
+          name: release-please-outputs
       - run: echo "VERSION=$(jq -r --arg A "${{ matrix.path }}--version" '.[$A]' outputs)" >> $GITHUB_ENV
       - uses: ptonini/gha-publish-docker-image@main
         with:

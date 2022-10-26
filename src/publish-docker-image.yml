@@ -25,7 +25,8 @@ jobs:
   startup:
     uses: ptonini/gha-workflows/.github/workflows/startup.yaml@main
     if: (!contains(github.event.pull_request.head.ref, 'release-please--'))
-    secrets: inherit
+    secrets:
+      ORG_CONFIG: ${{ secrets.ORG_CONFIG }}
   
   publish_candidate:
     uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main

@@ -24,16 +24,17 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: release-please-outputs
+      - run: echo "CHART=$(echo "${{ matrix.path }}" | awk -F/ '{ print $2 }' )" >> $GITHUB_ENV
+      - run: echo "VERSION=$(jq -r --arg A "${{ matrix.path }}--version" '.[$A]' outputs)" >> $GITHUB_ENV
       - run: echo "TAG_NAME=$(jq -r --arg A "${{ matrix.path }}--tag_name" '.[$A]' outputs)" >> $GITHUB_ENV
       - run: helm package --dependency-update ${{ matrix.path }}
       - uses: actions/upload-artifact@v3
         with:
+          path: ${{ env.CHART }}-${{ env.VERSION }}.tgz
           name: builds
-          path: '*.tgz'
       - uses: ptonini/gha-upload-release@main
         with:
-          file: '*.tgz'
-          file_glob: true
+          file: ${{ env.CHART }}-${{ env.VERSION }}.tgz
           tag: ${{ env.TAG_NAME }}
   update_repository:
     runs-on: ubuntu-latest
@@ -51,4 +52,4 @@ jobs:
       - uses: helm/chart-releaser-action@v1.4.1
         with:
           install_only: true
-      - run: cr index -p builds -i index.yaml -o ${{ github.event.repository.owner.name }} -t ${{ github.token}} -r ${{ github.event.repository.name }} --push --release-name-template "{{ .Name }}-v{{ .Version }}"
+      - run: cr index -p builds -i index.yaml -o ${{ github.event.repository.owner.name }} -t ${{ github.token }} -r ${{ github.event.repository.name }} --push --release-name-template "{{ .Name }}-v{{ .Version }}"

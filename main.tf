@@ -44,7 +44,7 @@ module "workflow_apply_helm_release_collection" {
   source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
   topics  = ["helm-collection github-flow"]
   file    = ".github/workflows/apply.yml"
-  content = file("src/apply-helm-release-collection.yml")
+  content = file("src/apply-helm-release-monorepo.yml")
   owner   = local.nodis
   providers = {
     github = github.nodis
@@ -100,7 +100,7 @@ module "workflow_publish_helm_monorepo" {
   source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
   topics  = ["helm-charts github-flow"]
   file    = ".github/workflows/publish.yml"
-  content = file("src/publish-helm-monorepo.yml")
+  content = file("src/publish-helm-chart-monorepo.yml")
   owner   = local.ptonini
   providers = {
     github = github.ptonini
