@@ -40,6 +40,17 @@ module "workflow_apply_helm_release" {
   }
 }
 
+module "workflow_apply_helm_release_collection" {
+  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  topics  = ["helm-collection github-flow"]
+  file    = ".github/workflows/apply.yml"
+  content = file("src/apply-helm-release-collection.yml")
+  owner   = local.nodis
+  providers = {
+    github = github.nodis
+  }
+}
+
 module "workflow_publish_docker_image" {
   source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
   topics  = ["docker-image github-flow"]

@@ -15,9 +15,5 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     needs:
       - startup
-    secrets:
-      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
-      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+    secrets: inherit
   

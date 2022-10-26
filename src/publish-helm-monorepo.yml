@@ -30,7 +30,7 @@ jobs:
         with:
           name: builds
           path: '*.tgz'
-      - uses: svenstaro/upload-release-action@v2
+      - uses: ptonini/gha-upload-release@main
         with:
           file: '*.tgz'
           file_glob: true

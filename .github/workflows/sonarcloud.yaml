@@ -3,9 +3,6 @@ name: sonarcloud
 on:
   workflow_call:
     secrets:
-      GH_PACKAGES_TOKEN:
-        description: ''
-        required: true
       SONAR_TOKEN:
         description: ''
         required: true

@@ -12,9 +12,7 @@ jobs:
         with:
           fetch-depth: 0
       - run: "[[ ! -e .trufflehog-ignore ]] || echo 'TRUFFLEHOG_EXTRA_ARGS=--exclude-paths=.trufflehog-ignore' >> $GITHUB_ENV"
-        shell: bash
-      - run: "[[ -z ${RUNNER_DEBUG} ]] || 'TRUFFLEHOG_EXTRA_ARGS=${TRUFFLEHOG_EXTRA_ARGS} --debug' >> $GITHUB_ENV"
-        shell: bash
+      - run: "[[ -z ${RUNNER_DEBUG} ]] || 'TRUFFLEHOG_EXTRA_ARGS={{ env.TRUFFLEHOG_EXTRA_ARGS }} --debug' >> $GITHUB_ENV"
       - uses: trufflesecurity/trufflehog@main
         with:
           path: ./

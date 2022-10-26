@@ -27,7 +27,7 @@ jobs:
           node-version: ${{ inputs.nodejs_version }}
       - run: yarn install --prod && yarn build
       - run: tar czvf ${ARTIFACT_FILENAME} build
-      - uses: svenstaro/upload-release-action@v2
+      - uses: ptonini/gha-upload-release@main
         with:
           file: ${{ env.ARTIFACT_FILENAME }}
           repo_token: ${{ github.token }}

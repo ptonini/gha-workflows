@@ -30,8 +30,7 @@ jobs:
   startup:
     uses: ptonini/gha-workflows/.github/workflows/startup.yaml@main
     if: (!contains(github.event.pull_request.head.ref, 'release-please--'))
-    secrets:
-      ORG_CONFIG: ${{ secrets.ORG_CONFIG }}
+    secrets: inherit
   
   publish_candidate:
     uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
@@ -51,22 +50,14 @@ jobs:
       - publish_candidate
     with:
       checksum: ${{ needs.publish_candidate.outputs.checksum }}
-    secrets:
-      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
-      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+    secrets: inherit
 
   destroy_staging:
     uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
     if: needs.startup.outputs.destroy_staging == 'true'
     needs:
       - startup
-    secrets:
-      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
-      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+    secrets: inherit
   
   approve_candidate:
     uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main
@@ -89,11 +80,7 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     needs:
       - promote_candidate
-    secrets:
-      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
-      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+    secrets: inherit
   
   unit_tests:
     uses: ptonini/gha-workflows/.github/workflows/unit-tests.yaml@main
@@ -104,9 +91,7 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/sonarcloud.yaml@main
     needs:
       - unit_tests
-    secrets:
-      GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    secrets: inherit
   
   code_linting:
     uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main

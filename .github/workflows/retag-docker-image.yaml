@@ -32,7 +32,7 @@ jobs:
       - uses: ptonini/gha-load-metadata@main
       - run: echo "USERNAME=$([[ -n "${{ secrets.USERNAME }}" ]] && echo "${{ secrets.USERNAME }}" || echo "${{ github.actor }}" )" >> $GITHUB_ENV
       - run: echo "PASSWORD=$([[ -n "${{ secrets.PASSWORD }}" ]] && echo "${{ secrets.PASSWORD }}" || echo "${{ secrets.GITHUB_TOKEN }}" )" >> $GITHUB_ENV
-      - uses: docker/login-action@v1
+      - uses: docker/login-action@v2
         with:
           registry: ${{ inputs.registry }}
           username: ${{ env.USERNAME }}

@@ -29,7 +29,7 @@ jobs:
         with:
           name: package
           path: dist/**
-      - uses: svenstaro/upload-release-action@v2
+      - uses: ptonini/gha-upload-release@main
         if: inputs.release_created == 'true'
         with:
           file: dist/**

@@ -25,8 +25,7 @@ jobs:
   startup:
     uses: ptonini/gha-workflows/.github/workflows/startup.yaml@main
     if: (!contains(github.event.pull_request.head.ref, 'release-please--'))
-    secrets:
-      ORG_CONFIG: ${{ secrets.ORG_CONFIG }}
+    secrets: inherit
   
   publish_candidate:
     uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
@@ -66,9 +65,7 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/sonarcloud.yaml@main
     needs:
       - unit_tests
-    secrets:
-      GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    secrets: inherit
 
   code_linting:
     uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
