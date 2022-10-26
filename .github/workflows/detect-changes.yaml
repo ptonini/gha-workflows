@@ -15,7 +15,7 @@ jobs:
     steps:
       - run: env | sort
       - run: jq . ${{ github.event_path }}
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v3
       - run: '[[ -e ./filters.yaml ]] || bash build_filters > filters.yaml'
       - uses: dorny/paths-filter@v2
         id: filter

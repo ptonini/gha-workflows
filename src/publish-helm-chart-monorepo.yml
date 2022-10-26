@@ -20,7 +20,7 @@ jobs:
       matrix:
         path: ${{ fromJSON(needs.release_please.outputs.paths_released) }}
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
         with:
           name: release-please-outputs
@@ -41,7 +41,7 @@ jobs:
     needs:
       - publish_charts
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - uses: actions/download-artifact@v3

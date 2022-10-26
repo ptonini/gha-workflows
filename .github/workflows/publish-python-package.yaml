@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v3
       - uses: ptonini/gha-load-metadata@main
       - run: pip3 install twine
       - run: python3 setup.py sdist

@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v3
       - uses: ptonini/gha-load-metadata@main
       - run: mkdir dist
       - run: docker run -v $(pwd):$(pwd) -w $(pwd) ${GO_BUILDER_IMAGE} go build -o dist/${GO_APP_NAME} ${GO_MAIN_FILE}

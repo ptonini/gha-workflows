@@ -50,7 +50,7 @@ jobs:
       docker_repository: ${{ steps.get_metadata.outputs.docker_repository }}
     steps:
       - run: env | sort
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v3
       - uses: ptonini/gha-get-metadata@main
         id: get_metadata
         with:

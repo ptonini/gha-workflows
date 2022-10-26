@@ -27,7 +27,7 @@ jobs:
       checksum: ${{ steps.publish_image.outputs.checksum }}
     steps:
       - run: env | sort
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v3
       - uses: ptonini/gha-publish-docker-image@main
         id: publish_image
         with:

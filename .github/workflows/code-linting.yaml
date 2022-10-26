@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v3
         with:
           ref: ${{ github.head_ref }}
       - run: (dotnet restore -f --no-cache && dotnet build && dotnet format) || true
