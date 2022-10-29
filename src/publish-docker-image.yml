@@ -66,7 +66,8 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/sonarcloud.yaml@main
     needs:
       - unit_tests
-    secrets: inherit
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   code_linting:
     uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
