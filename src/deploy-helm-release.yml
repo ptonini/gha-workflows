@@ -14,13 +14,18 @@ on:
   pull_request:
     types:
       - opened
-      - reopened
       - synchronize
       - closed
     branches:
       - master
       - main
       - legacy/*
+
+permissions:
+  id-token: write
+  packages: write
+  pull-requests: write
+  contents: write
 
 jobs:
   release_please:
@@ -31,7 +36,8 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/startup.yaml@main
     if: (!contains(github.event.pull_request.head.ref, 'release-please--'))
     secrets:
-      ORG_CONFIG: ${{ secrets.ORG_CONFIG }}
+      VAULT_K8S_ROLE_PATHS: ${{ secrets.VAULT_K8S_ROLE_PATHS }}
+      ORG_APPS: ${{ secrets.ORG_APPS }}
   
   publish_candidate:
     uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
@@ -50,23 +56,27 @@ jobs:
       - startup
       - publish_candidate
     with:
+      namespace: ${{ format('{0}-{1}', needs.startup.outputs.release_name, github.event.number) }}
       checksum: ${{ needs.publish_candidate.outputs.checksum }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
-      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
-
+      VAULT_K8S_ROLE_PATH: ${{ secrets.VAULT_K8S_STAGING_ROLE_PATH }}
+      VAULT_GITHUB_TOKEN_PATH: ${{ secrets.VAULT_GITHUB_TOKEN_PATH }}
+      ENVIRONMENT: ${{ secrets.STAGING_ENVIRONMENT }}
+      ORG_DOMAIN: ${{ secrets.ORG_DOMAIN }}
+      
   destroy_staging:
     uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
     if: needs.startup.outputs.destroy_staging == 'true'
     needs:
       - startup
+    with:
+      namespace: ${{ format('{0}-{1}', needs.startup.outputs.release_name, github.event.number) }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
-      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+      VAULT_K8S_ROLE_PATH: ${{ secrets.VAULT_K8S_STAGING_ROLE_PATH }}
   
   approve_candidate:
     uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main
@@ -89,24 +99,19 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     needs:
       - promote_candidate
+      - startup
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-      VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
-      VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+      VAULT_K8S_ROLE_PATH: ${{ needs.startup.outputs.vault_k8s_role_path }}
   
-  unit_tests:
-    uses: ptonini/gha-workflows/.github/workflows/unit-tests.yaml@main
+  quality_scan:
+    uses: ptonini/gha-workflows/.github/workflows/quality-scan.yaml@main
     if: needs.startup.outputs.skip_tests == 'false'
     needs:
       - startup
-  quality_scan:
-    uses: ptonini/gha-workflows/.github/workflows/sonarcloud.yaml@main
-    needs:
-      - unit_tests
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  
   code_linting:
     uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
     if: needs.startup.outputs.housekeeping == 'true'

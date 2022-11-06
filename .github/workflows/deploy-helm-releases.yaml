@@ -3,8 +3,27 @@ name: deploy-helm-releases
 on:
   workflow_call:
     inputs:
+      namespace:
+        description: ''
+        required: false
+        type: string
       checksum:
         description: ''
+        required: false
+        type: string
+      vault_method:
+        description: ''
+        default: jwt
+        required: false
+        type: string
+      vault_path:
+        description: ''
+        default: oidc/github
+        required: false
+        type: string
+      vault_role:
+        description: ''
+        default: workflow
         required: false
         type: string
     secrets:
@@ -14,12 +33,19 @@ on:
       VAULT_ADDR:
         description: ''
         required: true
-      VAULT_APPROLE_ROLE_ID:
+      VAULT_K8S_ROLE_PATH:
         description: ''
         required: true
-      VAULT_APPROLE_SECRET_ID:
+      ENVIRONMENT:
         description: ''
-        required: true
+        required: false
+      ORG_DOMAIN:
+        description: ""
+        required: false
+      VAULT_GITHUB_TOKEN_PATH:
+        description: ''
+        required: false
+        
 
 jobs:
   deploy_helm_releases:
@@ -31,21 +57,31 @@ jobs:
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
           validation_addr: ${{ secrets.VAULT_ADDR }}
-      - uses: hashicorp/vault-action@v2.3.0
+      - uses: hashicorp/vault-action@v2.4.2
         with:
-          method: approle
+          method: ${{ inputs.vault_method }}
+          path: ${{ inputs.vault_path }}
+          role: ${{ inputs.vault_role }}
           url: ${{ secrets.VAULT_ADDR }}
-          roleId: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
-          secrets: |
-            ${{ env.VAULT_GITHUB_TOKEN_PATH }} token | GH_TOKEN;
-            ${{ env.VAULT_REGISTRY_CREDENTIALS_PATH }} dockerconfigjson | REGISTRY_CREDENTIALS;
-            ${{ env.VAULT_K8S_ROLE_PATH }} kube_config | KUBECONFIG_CONTENT;
+          exportToken: true
+          secrets: ${{ secrets.VAULT_K8S_ROLE_PATH }} kube_config | KUBECONFIG_CONTENT;
+      - run: echo "VAULT_GITHUB_TOKEN_PATH=${{ secrets.VAULT_GITHUB_TOKEN_PATH }}" >> $GITHUB_ENV
+      - uses: hashicorp/vault-action@v2.4.2
+        if: env.VAULT_GITHUB_TOKEN_PATH != ''
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          token: ${{ env.VAULT_TOKEN }}
+          secrets: ${{ secrets.VAULT_GITHUB_TOKEN_PATH }} token | GH_TOKEN;
+      - run: echo "GH_TOKEN=${{ github.token }}" >> $GITHUB_ENV
+        if: env.VAULT_GITHUB_TOKEN_PATH == ''
       - uses: ptonini/gha-prepare-helm-releases@main
         id: releases
         with:
           github_token: ${{ env.GH_TOKEN }}
           checksum: ${{ inputs.checksum }}
+          namespace: ${{ inputs.namespace }}
+          environment: ${{ secrets.ENVIRONMENT }}
+          org_domain: ${{ secrets.ORG_DOMAIN }}
       - uses: actions/upload-artifact@v3
         with:
           name: releases
@@ -54,3 +90,7 @@ jobs:
         with:
           kubeconfig_content: ${{ env.KUBECONFIG_CONTENT }}
           releases: ${{ steps.releases.outputs.releases }}
+      - uses: thollander/actions-comment-pull-request@v1
+        if: steps.releases.outputs.message != ''
+        with:
+          message: ${{ steps.releases.outputs.message }}

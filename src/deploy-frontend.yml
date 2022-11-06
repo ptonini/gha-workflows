@@ -21,6 +21,12 @@ on:
       - main
       - legacy/*
 
+permissions:
+  id-token: write
+  packages: write
+  pull-request: write
+  contents: read
+
 jobs:
   release_please:
     uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
@@ -29,7 +35,8 @@ jobs:
   startup:
     uses: ptonini/gha-workflows/.github/workflows/startup.yaml@main
     if: (!contains(github.event.pull_request.head.ref, 'release-please--'))
-    secrets: inherit
+    secrets:
+      VAULT_K8S_ROLE_PATHS: ${{ secrets.VAULT_K8S_ROLE_PATHS }}
   
   publish_candidate:
     uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
@@ -48,7 +55,10 @@ jobs:
       - publish_candidate
     with:
       checksum: ${{ needs.publish_candidate.outputs.checksum }}
-    secrets: inherit
+    secrets:
+      ORG_DOMAIN: ${{ secrets.ORG_DOMAIN }}
+      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
 
   destroy_staging:
     uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
@@ -74,17 +84,13 @@ jobs:
       tag_name: ${{ needs.release_please.outputs.tag_name }}
     secrets: inherit
   
-  unit_tests:
-    uses: ptonini/gha-workflows/.github/workflows/unit-tests.yaml@main
+  quality_scan:
+    uses: ptonini/gha-workflows/.github/workflows/quality-scan.yaml@main
     if: needs.startup.outputs.skip_tests == 'false'
     needs:
       - startup
-  quality_scan:
-    uses: ptonini/gha-workflows/.github/workflows/sonarcloud.yaml@main
-    needs:
-      - unit_tests
-    secrets: inherit
-  
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   code_linting:
     uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
     if: needs.startup.outputs.housekeeping == 'true'

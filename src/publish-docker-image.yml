@@ -9,7 +9,6 @@ on:
   pull_request:
     types:
       - opened
-      - reopened
       - synchronize
       - closed
     branches:
@@ -25,8 +24,6 @@ jobs:
   startup:
     uses: ptonini/gha-workflows/.github/workflows/startup.yaml@main
     if: (!contains(github.event.pull_request.head.ref, 'release-please--'))
-    secrets:
-      ORG_CONFIG: ${{ secrets.ORG_CONFIG }}
   
   publish_candidate:
     uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
@@ -57,18 +54,13 @@ jobs:
       source_tag: pr-approved
       tag: ${{ needs.startup.outputs.release_version }}
    
-  unit_tests:
-    uses: ptonini/gha-workflows/.github/workflows/unit-tests.yaml@main
+  quality_scan:
+    uses: ptonini/gha-workflows/.github/workflows/quality-scan.yaml@main
     if: needs.startup.outputs.skip_tests == 'false'
     needs:
       - startup
-  quality_scan:
-    uses: ptonini/gha-workflows/.github/workflows/sonarcloud.yaml@main
-    needs:
-      - unit_tests
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
   code_linting:
     uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
     if: needs.startup.outputs.housekeeping == 'true'

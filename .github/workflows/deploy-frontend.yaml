@@ -7,19 +7,29 @@ on:
         description: ''
         required: true
         type: string
+      vault_method:
+        description: ''
+        default: jwt
+        required: false
+        type: string
+      vault_path:
+        description: ''
+        default: oidc/github
+        required: false
+        type: string
+      vault_role:
+        description: ''
+        default: workflow
+        required: false
+        type: string
     secrets:
-      openvpn_config:
+      OPENVPN_CONFIG:
         description: ''
         required: true
-      vault_addr:
+      VAULT_ADDR:
         description: ''
         required: true
-      vault_approle_role_id:
-        description: ''
-        required: true
-      vault_approle_secret_id:
-        description: ''
-        required: true
+
         
 jobs:
   deploy_frontend:
@@ -33,12 +43,12 @@ jobs:
       - uses: ptonini/gha-openvpn@master
         with:
           openvpn_config: ${{ secrets.openvpn_config }}
-      - uses: hashicorp/vault-action@v2.3.0
+      - uses: hashicorp/vault-action@v2.4.2
         with:
-          url: ${{ secrets.vault_addr }}
-          method: approle
-          roleId: ${{ secrets.vault_approle_role_id }}
-          secretId: ${{ secrets.vault_approle_secret_id }}
+          method: ${{ inputs.vault_method }}
+          path: ${{ inputs.vault_path }}
+          role: ${{ inputs.vault_role }}
+          url: ${{ secrets.VAULT_ADDR }}
           secrets: |
             ${{ env.VAULT_AWS_ROLE_PATH }} access_key | AWS_ACCESS_KEY_ID;
             ${{ env.VAULT_AWS_ROLE_PATH }} secret_key | AWS_SECRET_ACCESS_KEY;
