@@ -16,15 +16,15 @@ on:
         description: ''
         required: false
     outputs:
-      checksum:
+      digest:
         description: ''
-        value: ${{ jobs.publish_docker_image.outputs.checksum }}
+        value: ${{ jobs.publish_docker_image.outputs.digest }}
 
 jobs:
   publish_docker_image:
     runs-on: ubuntu-latest
     outputs:
-      checksum: ${{ steps.publish_image.outputs.checksum }}
+      digest: ${{ steps.publish_image.outputs.digest }}
     steps:
       - run: env | sort
       - uses: actions/checkout@v3

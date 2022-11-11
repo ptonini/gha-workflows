@@ -118,3 +118,13 @@ module "workflow_publish_docker_monorepo" {
   }
 }
 
+module "workflow_publish_docker_image2" {
+  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  topics  = ["docker-image github-flow"]
+  file    = ".github/workflows/publish.yml"
+  content = file("src/publish-docker-image.yml")
+  owner   = local.ptonini
+  providers = {
+    github = github.ptonini
+  }
+}

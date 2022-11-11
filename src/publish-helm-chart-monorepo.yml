@@ -24,9 +24,9 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: release-please-outputs
-      - run: echo "CHART=$(echo "${{ matrix.path }}" | awk -F/ '{ print $2 }' )" >> $GITHUB_ENV
-      - run: echo "VERSION=$(jq -r --arg A "${{ matrix.path }}--version" '.[$A]' outputs)" >> $GITHUB_ENV
-      - run: echo "TAG_NAME=$(jq -r --arg A "${{ matrix.path }}--tag_name" '.[$A]' outputs)" >> $GITHUB_ENV
+      - run: echo "CHART=$(echo "${{ matrix.path }}" | awk -F/ '{ print $2 }' )" | tee -a $GITHUB_ENV
+      - run: echo "VERSION=$(jq -r --arg A "${{ matrix.path }}--version" '.[$A]' outputs)" | tee -a $GITHUB_ENV
+      - run: echo "TAG_NAME=$(jq -r --arg A "${{ matrix.path }}--tag_name" '.[$A]' outputs)" | tee -a $GITHUB_ENV
       - run: helm package --dependency-update ${{ matrix.path }}
       - uses: actions/upload-artifact@v3
         with:

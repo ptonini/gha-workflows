@@ -1,4 +1,4 @@
-name: quality-scan
+name: code-testing
 
 on:
   workflow_call:
@@ -7,16 +7,17 @@ on:
         description: ''
         required: true
 
+env:
+  REPORTS_FOLDER: reports
+  GO_COVERAGE_PROFILE: coverage.out
+  GO_TEST_REPORT: report.out
+  PYTHON_COVERAGE_REPORT: "*coverage-*.xml"
+  PYTHON_XUNIT_REPORT: xunit-result-*.xml
+  JAVASCRIPT_LCOV_INFO: lcov.info
+
 jobs:
-  quality_scan:
+  code_testing:
     runs-on: ubuntu-latest
-    env:
-      REPORTS_FOLDER: reports
-      GO_COVERAGE_PROFILE: coverage.out
-      GO_TEST_REPORT: report.out
-      PYTHON_COVERAGE_REPORT: "*coverage-*.xml"
-      PYTHON_XUNIT_REPORT: xunit-result-*.xml
-      JAVASCRIPT_LCOV_INFO: lcov.info
     steps:
       - run: env | sort
       - uses: actions/checkout@v3

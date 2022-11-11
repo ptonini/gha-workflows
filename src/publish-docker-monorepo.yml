@@ -26,7 +26,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: release-please-outputs
-      - run: echo "VERSION=$(jq -r --arg A "${{ matrix.path }}--version" '.[$A]' outputs)" >> $GITHUB_ENV
+      - run: echo "VERSION=$(jq -r --arg A "${{ matrix.path }}--version" '.[$A]' outputs)" | tee -a $GITHUB_ENV
       - uses: ptonini/gha-publish-docker-image@main
         with:
           repository: ${{ secrets.REPOSITORY_PREFIX }}/${{ matrix.path }}

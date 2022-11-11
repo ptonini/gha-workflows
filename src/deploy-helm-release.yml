@@ -28,36 +28,48 @@ permissions:
   contents: write
 
 jobs:
+  
+  code_testing:
+    uses: ptonini/gha-workflows/.github/workflows/code-testing.yaml@main
+    if: github.event.action != 'closed' && github.event.head_commit.author.name != 'github-actions[bot]' && !contains(github.event.repository.topics, 'skip-testing')
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  code_linting:
+    uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
+    if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && !contains(github.event.repository.topics, 'skip-linting')
+  security_scan:
+    uses: ptonini/gha-workflows/.github/workflows/trufflehog.yaml@main
+    if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
   release_please:
     uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
   
-  startup:
-    uses: ptonini/gha-workflows/.github/workflows/startup.yaml@main
-    if: (!contains(github.event.pull_request.head.ref, 'release-please--'))
+  start:
+    uses: ptonini/gha-workflows/.github/workflows/start.yaml@main
+    if: (!startsWith(github.event.pull_request.head.ref, 'release-please--'))
     secrets:
       VAULT_K8S_ROLE_PATHS: ${{ secrets.VAULT_K8S_ROLE_PATHS }}
-      ORG_APPS: ${{ secrets.ORG_APPS }}
   
-  publish_candidate:
+  build_candidate:
     uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
-    if: needs.startup.outputs.publish_candidate == 'true'
+    if:  github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
     needs:
-      - startup
+      - start
     with:
-      repository: ${{ needs.startup.outputs.docker_repository }}
+      repository: ${{ needs.start.outputs.docker_repository }}
       tags: ${{ format('latest pr{0}', github.event.number) }}
     secrets:
-      BUILD_ARGUMENTS: --build-arg BUILD_USERNAME=${{ github.actor }} --build-arg BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
-  create_staging:
+      BUILD_ARGUMENTS: |
+        BUILD_USERNAME=${{ github.actor }}
+        BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
+  deploy_staging:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
-    if: needs.startup.outputs.create_staging == 'true'
+    if: (!contains(github.event.repository.topics, 'skip-staging'))
     needs:
-      - startup
-      - publish_candidate
+      - build_candidate
     with:
-      namespace: ${{ format('{0}-{1}', needs.startup.outputs.release_name, github.event.number) }}
-      checksum: ${{ needs.publish_candidate.outputs.checksum }}
+      namespace: ${{ format('{0}-{1}', github.event.repository.name, github.event.number) }}
+      digest: ${{ needs.build_candidate.outputs.digest }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
@@ -65,14 +77,15 @@ jobs:
       VAULT_GITHUB_TOKEN_PATH: ${{ secrets.VAULT_GITHUB_TOKEN_PATH }}
       ENVIRONMENT: ${{ secrets.STAGING_ENVIRONMENT }}
       ORG_DOMAIN: ${{ secrets.ORG_DOMAIN }}
-      
+      ORG_APP_GROUPS: ${{ secrets.ORG_APP_GROUPS }}
+  
   destroy_staging:
     uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
-    if: needs.startup.outputs.destroy_staging == 'true'
+    if:  github.event_name == 'pull_request' && github.event.action == 'closed' && !contains(github.event.repository.topics, 'skip-staging')
     needs:
-      - startup
+      - start
     with:
-      namespace: ${{ format('{0}-{1}', needs.startup.outputs.release_name, github.event.number) }}
+      namespace: ${{ format('{0}-{1}', github.event.repository.name, github.event.number) }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
@@ -80,45 +93,29 @@ jobs:
   
   approve_candidate:
     uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main
-    if: needs.startup.outputs.approve_candidate == 'true'
+    if: github.event.pull_request.merged
     needs:
-      - startup
+      - start
     with:
+      repository: ${{ needs.start.outputs.docker_repository }}
       source_tag: ${{ format('pr{0}', github.event.pull_request.number) }}
       tag: pr-approved
   
   promote_candidate:
     uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main
-    if: needs.startup.outputs.promote_candidate == 'true'
+    if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]')
     needs:
-      - startup
+      - start
     with:
+      repository: ${{ needs.start.outputs.docker_repository }}
       source_tag: pr-approved
-      tag: ${{ needs.startup.outputs.release_version }}
-  deploy_to_production:
+      tag: ${{ needs.start.outputs.release_version }}
+  deploy_production:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     needs:
       - promote_candidate
-      - startup
+      - start
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-      VAULT_K8S_ROLE_PATH: ${{ needs.startup.outputs.vault_k8s_role_path }}
-  
-  quality_scan:
-    uses: ptonini/gha-workflows/.github/workflows/quality-scan.yaml@main
-    if: needs.startup.outputs.skip_tests == 'false'
-    needs:
-      - startup
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  code_linting:
-    uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
-    if: needs.startup.outputs.housekeeping == 'true'
-    needs:
-      - startup
-  security_leaks_scan:
-    uses: ptonini/gha-workflows/.github/workflows/trufflehog.yaml@main
-    if: needs.startup.outputs.housekeeping == 'true'
-    needs:
-      - startup
+      VAULT_K8S_ROLE_PATH: ${{ needs.start.outputs.vault_k8s_role_path }}

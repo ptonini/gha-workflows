@@ -7,7 +7,7 @@ on:
         description: ''
         required: false
         type: string
-      checksum:
+      digest:
         description: ''
         required: false
         type: string
@@ -42,6 +42,9 @@ on:
       ORG_DOMAIN:
         description: ""
         required: false
+      ORG_APP_GROUPS:
+        description: ""
+        required: false
       VAULT_GITHUB_TOKEN_PATH:
         description: ''
         required: false
@@ -52,12 +55,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
-      - uses: ptonini/gha-load-metadata@main
       - uses: ptonini/gha-openvpn@main
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
           validation_addr: ${{ secrets.VAULT_ADDR }}
-      - uses: hashicorp/vault-action@v2.4.2
+      - uses: hashicorp/vault-action@v2.4.3
         with:
           method: ${{ inputs.vault_method }}
           path: ${{ inputs.vault_path }}
@@ -65,23 +67,24 @@ jobs:
           url: ${{ secrets.VAULT_ADDR }}
           exportToken: true
           secrets: ${{ secrets.VAULT_K8S_ROLE_PATH }} kube_config | KUBECONFIG_CONTENT;
-      - run: echo "VAULT_GITHUB_TOKEN_PATH=${{ secrets.VAULT_GITHUB_TOKEN_PATH }}" >> $GITHUB_ENV
-      - uses: hashicorp/vault-action@v2.4.2
+      - run: echo "VAULT_GITHUB_TOKEN_PATH=${{ secrets.VAULT_GITHUB_TOKEN_PATH }}" | tee -a $GITHUB_ENV
+      - uses: hashicorp/vault-action@v2.4.3
         if: env.VAULT_GITHUB_TOKEN_PATH != ''
         with:
           url: ${{ secrets.VAULT_ADDR }}
           token: ${{ env.VAULT_TOKEN }}
           secrets: ${{ secrets.VAULT_GITHUB_TOKEN_PATH }} token | GH_TOKEN;
-      - run: echo "GH_TOKEN=${{ github.token }}" >> $GITHUB_ENV
+      - run: echo "GH_TOKEN=${{ github.token }}" | tee -a $GITHUB_ENV
         if: env.VAULT_GITHUB_TOKEN_PATH == ''
       - uses: ptonini/gha-prepare-helm-releases@main
         id: releases
         with:
           github_token: ${{ env.GH_TOKEN }}
-          checksum: ${{ inputs.checksum }}
+          digest: ${{ inputs.digest }}
           namespace: ${{ inputs.namespace }}
           environment: ${{ secrets.ENVIRONMENT }}
           org_domain: ${{ secrets.ORG_DOMAIN }}
+          org_app_groups: ${{ secrets.ORG_APP_GROUPS }}
       - uses: actions/upload-artifact@v3
         with:
           name: releases
@@ -94,3 +97,4 @@ jobs:
         if: steps.releases.outputs.message != ''
         with:
           message: ${{ steps.releases.outputs.message }}
+          comment_includes: ${{ steps.releases.outputs.message }}

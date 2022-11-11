@@ -43,7 +43,7 @@ jobs:
       - uses: ptonini/gha-openvpn@master
         with:
           openvpn_config: ${{ secrets.openvpn_config }}
-      - uses: hashicorp/vault-action@v2.4.2
+      - uses: hashicorp/vault-action@v2.4.3
         with:
           method: ${{ inputs.vault_method }}
           path: ${{ inputs.vault_path }}

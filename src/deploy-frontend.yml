@@ -32,26 +32,26 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
   
-  startup:
-    uses: ptonini/gha-workflows/.github/workflows/startup.yaml@main
+  start:
+    uses: ptonini/gha-workflows/.github/workflows/start.yaml@main
     if: (!contains(github.event.pull_request.head.ref, 'release-please--'))
     secrets:
       VAULT_K8S_ROLE_PATHS: ${{ secrets.VAULT_K8S_ROLE_PATHS }}
   
   publish_candidate:
     uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
-    if: needs.startup.outputs.publish_candidate == 'true'
+    if: needs.start.outputs.publish_candidate == 'true'
     needs:
-      - startup
+      - start
     with:
       tags: ${{ format('latest pr{0}', github.event.number) }}
     secrets:
       BUILD_PASSWORD: ${{ secrets.GH_PACKAGES_TOKEN }}
   create_staging:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
-    if: needs.startup.outputs.create_staging == 'true'
+    if: needs.start.outputs.create_staging == 'true'
     needs:
-      - startup
+      - start
       - publish_candidate
     with:
       checksum: ${{ needs.publish_candidate.outputs.checksum }}
@@ -62,16 +62,16 @@ jobs:
 
   destroy_staging:
     uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
-    if: needs.startup.outputs.destroy_staging == 'true'
+    if: needs.start.outputs.destroy_staging == 'true'
     needs:
-      - startup
+      - start
     secrets: inherit
    
   publish_frontend:
     uses: ptonini/gha-workflows/.github/workflows/publish-frontend.yaml@main
     if: needs.release_please.outputs.release_created == 'true'
     needs:
-      - startup
+      - start
       - release_please
     with:
       tag_name: ${{ needs.release_please.outputs.tag_name }}
@@ -85,19 +85,19 @@ jobs:
     secrets: inherit
   
   quality_scan:
-    uses: ptonini/gha-workflows/.github/workflows/quality-scan.yaml@main
-    if: needs.startup.outputs.skip_tests == 'false'
+    uses: ptonini/gha-workflows/.github/workflows/code-testing.yaml@main
+    if: needs.start.outputs.skip_tests == 'false'
     needs:
-      - startup
+      - start
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   code_linting:
     uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
-    if: needs.startup.outputs.housekeeping == 'true'
+    if: needs.start.outputs.housekeeping == 'true'
     needs:
-      - startup
+      - start
   security_leaks_scan:
     uses: ptonini/gha-workflows/.github/workflows/trufflehog.yaml@main
-    if: needs.startup.outputs.housekeeping == 'true'
+    if: needs.start.outputs.housekeeping == 'true'
     needs:
-      - startup
+      - start

@@ -46,14 +46,17 @@ jobs:
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
           validation_addr: ${{ secrets.VAULT_ADDR }}
-      - uses: hashicorp/vault-action@v2.4.2
+      - uses: hashicorp/vault-action@v2.4.3
         with:
           method: ${{ inputs.vault_method }}
           path: ${{ inputs.vault_path }}
           role: ${{ inputs.vault_role }}
           url: ${{ secrets.VAULT_ADDR }}
           secrets: ${{ secrets.VAULT_K8S_ROLE_PATH }} kube_config | KUBECONFIG_CONTENT;
-      - run: echo "${KUBECONFIG_CONTENT}" > kubeconfig && chmod 0600 kubeconfig && echo "KUBECONFIG=kubeconfig" >> ${GITHUB_ENV}
-      - run: helm --namespace ${{ inputs.namespace }} list --short | xargs -r helm uninstall --namespace ${{ inputs.namespace }}
-      - run: kubectl delete all --all --namespace ${{ inputs.namespace }}
-      - run: kubectl get namespace ${{ inputs.namespace }} && kubectl delete namespace ${{ inputs.namespace }} || true
+      - run: echo "NAMESPACE=${NS//_/-}" | tee -a ${GITHUB_ENV}
+        env:
+          NS: ${{ inputs.namespace }}
+      - run: echo "${KUBECONFIG_CONTENT}" > kubeconfig && chmod 0600 kubeconfig && echo "KUBECONFIG=kubeconfig" | tee -a ${GITHUB_ENV}
+      - run: helm --namespace ${NAMESPACE} list --short | xargs -r helm uninstall --namespace ${NAMESPACE}
+      - run: kubectl delete all --all --namespace ${NAMESPACE}
+      - run: kubectl get namespace ${NAMESPACE} && kubectl delete namespace ${NAMESPACE}
