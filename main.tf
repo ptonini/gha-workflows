@@ -19,7 +19,7 @@ provider "github" {
 
 
 module "workflow_deploy_helm_release" {
-  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  source  = "./modules/github_repository_file"
   topics  = ["helm-release github-flow"]
   file    = ".github/workflows/deploy.yml"
   content = file("src/deploy-helm-release.yml")
@@ -30,7 +30,7 @@ module "workflow_deploy_helm_release" {
 }
 
 module "workflow_apply_helm_release" {
-  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  source  = "./modules/github_repository_file"
   topics  = ["helm-release github-flow"]
   file    = ".github/workflows/apply.yml"
   content = file("src/apply-helm-release.yml")
@@ -41,7 +41,7 @@ module "workflow_apply_helm_release" {
 }
 
 module "workflow_apply_helm_release_collection" {
-  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  source  = "./modules/github_repository_file"
   topics  = ["helm-collection github-flow"]
   file    = ".github/workflows/apply.yml"
   content = file("src/apply-helm-release-monorepo.yml")
@@ -52,7 +52,7 @@ module "workflow_apply_helm_release_collection" {
 }
 
 module "workflow_publish_docker_image" {
-  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  source  = "./modules/github_repository_file"
   topics  = ["docker-image github-flow"]
   file    = ".github/workflows/publish.yml"
   content = file("src/publish-docker-image.yml")
@@ -63,7 +63,7 @@ module "workflow_publish_docker_image" {
 }
 
 module "workflow_publish_go_application" {
-  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  source  = "./modules/github_repository_file"
   topics  = ["vault-plugin github-flow"]
   file    = ".github/workflows/publish.yml"
   content = file("src/publish-go-application.yml")
@@ -74,7 +74,7 @@ module "workflow_publish_go_application" {
 }
 
 module "workflow_publish_python_package" {
-  source   = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  source   = "./modules/github_repository_file"
   topics   = ["package github-flow", "library github-flow"]
   language = "python"
   file     = ".github/workflows/publish.yml"
@@ -86,7 +86,7 @@ module "workflow_publish_python_package" {
 }
 
 module "workflow_publish_lua_rock" {
-  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  source  = "./modules/github_repository_file"
   topics  = ["kong-plugin github-flow"]
   file    = ".github/workflows/publish.yml"
   content = file("src/publish-lua-rock.yml")
@@ -97,7 +97,7 @@ module "workflow_publish_lua_rock" {
 }
 
 module "workflow_publish_helm_monorepo" {
-  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  source  = "./modules/github_repository_file"
   topics  = ["helm-charts github-flow"]
   file    = ".github/workflows/publish.yml"
   content = file("src/publish-helm-chart-monorepo.yml")
@@ -108,7 +108,7 @@ module "workflow_publish_helm_monorepo" {
 }
 
 module "workflow_publish_docker_monorepo" {
-  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  source  = "./modules/github_repository_file"
   topics  = ["docker-images github-flow"]
   file    = ".github/workflows/publish.yml"
   content = file("src/publish-docker-monorepo.yml")
@@ -119,7 +119,7 @@ module "workflow_publish_docker_monorepo" {
 }
 
 module "workflow_publish_docker_image2" {
-  source  = "git@github.com:nodis-com-br/tf_modules.git//github_repository_file"
+  source  = "./modules/github_repository_file"
   topics  = ["docker-image github-flow"]
   file    = ".github/workflows/publish.yml"
   content = file("src/publish-docker-image.yml")

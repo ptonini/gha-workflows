@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
       - run: mkdir -p ${{ env.REPORTS_FOLDER }}
       - run: touch ${{ env.REPORTS_FOLDER }}/.placeholder
-      - uses: ptonini/gha-go-tests@main
+      - uses: ptonini/gha-test-go@main
         if: github.event.repository.language == 'Go'
         with:
           reports_folder: ${{ env.REPORTS_FOLDER }}

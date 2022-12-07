@@ -18,7 +18,7 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/detect-changes.yaml@main
   
   apply_releases:
-    uses: ptonini/gha-workflows/.github/workflows/apply-helm-release.yaml@main
+    runs-on: ubuntu-latest
     if: needs.detect_changes.outputs.changes != '[]'
     needs:
       - detect_changes
@@ -40,6 +40,7 @@ jobs:
         with:
           method: jwt
           role: workflow
+          path: oidc/github
           url: ${{ secrets.VAULT_ADDR }}
           secrets: ${{ env.VAULT_K8S_ROLE_PATH }} kube_config | KUBECONFIG_CONTENT;
       - uses: ptonini/gha-deploy-helm-releases@main
