@@ -15,6 +15,7 @@ on:
       BUILD_ARGUMENTS:
         description: ''
         required: false
+        
     outputs:
       digest:
         description: ''
@@ -33,4 +34,4 @@ jobs:
         with:
           repository: ${{ inputs.repository }}
           tags: ${{ inputs.tags }}
-          build_arguments: ${{ secrets.BUILD_ARGUMENTS }}
+          build_arguments: "${{ secrets.BUILD_ARGUMENTS }}"

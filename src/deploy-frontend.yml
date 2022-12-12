@@ -24,10 +24,22 @@ on:
 permissions:
   id-token: write
   packages: write
-  pull-request: write
-  contents: read
+  pull-requests: write
+  contents: write
 
 jobs:
+  
+  code_testing:
+    uses: ptonini/gha-workflows/.github/workflows/code-testing.yaml@main
+    if: github.event.action != 'closed' && github.event.head_commit.author.name != 'github-actions[bot]' && !contains(github.event.repository.topics, 'skip-testing')
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  code_linting:
+    uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
+    if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && !contains(github.event.repository.topics, 'skip-linting')
+  security_scan:
+    uses: ptonini/gha-workflows/.github/workflows/trufflehog.yaml@main
+    if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
   release_please:
     uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
@@ -38,34 +50,46 @@ jobs:
     secrets:
       VAULT_K8S_ROLE_PATHS: ${{ secrets.VAULT_K8S_ROLE_PATHS }}
   
-  publish_candidate:
+  build_candidate:
     uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
-    if: needs.start.outputs.publish_candidate == 'true'
+    if:  github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
     needs:
       - start
     with:
+      repository: ${{ needs.start.outputs.docker_repository }}
       tags: ${{ format('latest pr{0}', github.event.number) }}
     secrets:
-      BUILD_PASSWORD: ${{ secrets.GH_PACKAGES_TOKEN }}
-  create_staging:
+      BUILD_ARGUMENTS: |
+        BUILD_USERNAME=${{ github.actor }}
+        BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
+  deploy_staging:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
-    if: needs.start.outputs.create_staging == 'true'
+    if: (!contains(github.event.repository.topics, 'skip-staging'))
     needs:
-      - start
-      - publish_candidate
+      - build_candidate
     with:
-      checksum: ${{ needs.publish_candidate.outputs.checksum }}
+      namespace: ${{ format('{0}-{1}', github.event.repository.name, github.event.number) }}
+      digest: ${{ needs.build_candidate.outputs.digest }}
     secrets:
-      ORG_DOMAIN: ${{ secrets.ORG_DOMAIN }}
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+      VAULT_K8S_ROLE_PATH: ${{ secrets.VAULT_K8S_STAGING_ROLE_PATH }}
+      VAULT_GITHUB_TOKEN_PATH: ${{ secrets.VAULT_GITHUB_TOKEN_PATH }}
+      ENVIRONMENT: ${{ secrets.STAGING_ENVIRONMENT }}
+      ORG_DOMAIN: ${{ secrets.ORG_DOMAIN }}
+      ORG_APP_GROUPS: ${{ secrets.ORG_APP_GROUPS }}
 
   destroy_staging:
     uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
-    if: needs.start.outputs.destroy_staging == 'true'
+    if:  github.event_name == 'pull_request' && github.event.action == 'closed' && !contains(github.event.repository.topics, 'skip-staging')
     needs:
       - start
-    secrets: inherit
+    with:
+      namespace: ${{ format('{0}-{1}', github.event.repository.name, github.event.number) }}
+    secrets:
+      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+      VAULT_K8S_ROLE_PATH: ${{ secrets.VAULT_K8S_STAGING_ROLE_PATH }}
    
   publish_frontend:
     uses: ptonini/gha-workflows/.github/workflows/publish-frontend.yaml@main
@@ -84,20 +108,3 @@ jobs:
       tag_name: ${{ needs.release_please.outputs.tag_name }}
     secrets: inherit
   
-  quality_scan:
-    uses: ptonini/gha-workflows/.github/workflows/code-testing.yaml@main
-    if: needs.start.outputs.skip_tests == 'false'
-    needs:
-      - start
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  code_linting:
-    uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
-    if: needs.start.outputs.housekeeping == 'true'
-    needs:
-      - start
-  security_leaks_scan:
-    uses: ptonini/gha-workflows/.github/workflows/trufflehog.yaml@main
-    if: needs.start.outputs.housekeeping == 'true'
-    needs:
-      - start
