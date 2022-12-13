@@ -46,7 +46,7 @@ jobs:
   
   start:
     uses: ptonini/gha-workflows/.github/workflows/start.yaml@main
-    if: (!contains(github.event.pull_request.head.ref, 'release-please--'))
+    if: (!startsWith(github.event.pull_request.head.ref, 'release-please--'))
     secrets:
       VAULT_K8S_ROLE_PATHS: ${{ secrets.VAULT_K8S_ROLE_PATHS }}
   
@@ -78,7 +78,7 @@ jobs:
       ENVIRONMENT: ${{ secrets.STAGING_ENVIRONMENT }}
       ORG_DOMAIN: ${{ secrets.ORG_DOMAIN }}
       ORG_APP_GROUPS: ${{ secrets.ORG_APP_GROUPS }}
-
+  
   destroy_staging:
     uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
     if:  github.event_name == 'pull_request' && github.event.action == 'closed' && !contains(github.event.repository.topics, 'skip-staging')
@@ -90,21 +90,22 @@ jobs:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
       VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
       VAULT_K8S_ROLE_PATH: ${{ secrets.VAULT_K8S_STAGING_ROLE_PATH }}
-   
+  
   publish_frontend:
     uses: ptonini/gha-workflows/.github/workflows/publish-frontend.yaml@main
-    if: needs.release_please.outputs.release_created == 'true'
+    if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]')
     needs:
       - start
-      - release_please
     with:
       tag_name: ${{ needs.release_please.outputs.tag_name }}
+    secrets:
+      NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
   deploy_frontend:
     uses: ptonini/gha-workflows/.github/workflows/deploy-frontend.yaml@main
     needs:
       - publish_frontend
-      - release_please
     with:
-      tag_name: ${{ needs.release_please.outputs.tag_name }}
-    secrets: inherit
-  
+      tag_name: ${{ needs.start.outputs.release_version }}
+    secrets:
+      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}

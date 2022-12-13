@@ -11,8 +11,13 @@ on:
         type: string
         description: ''
         required: false
-        default: '15.14.0'
-  
+        default: '16.10.0'
+    secrets:
+      NPM_TOKEN:
+        description: ''
+        required: false
+        
+
 jobs:
   publish_frontend:
     runs-on: ubuntu-latest
@@ -26,6 +31,8 @@ jobs:
         with:
           node-version: ${{ inputs.nodejs_version }}
       - run: yarn install --prod && yarn build
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - run: tar czvf ${ARTIFACT_FILENAME} build
       - uses: ptonini/gha-upload-release@main
         with:
