@@ -1,18 +1,18 @@
 locals {
   default_email   = "${var.commit_author}@users.noreply.github.com"
   default_message = "chore: ${var.file} created/modified by terraform [skip ci]"
-  query_00 = "org:${var.owner} archived:false"
-  query = var.language == null ? local.query_00 : "${local.query_00} language:${var.language}"
+  query_00        = "org:${var.owner} archived:false"
+  query           = var.language == null ? local.query_00 : "${local.query_00} language:${var.language}"
 }
 
 data "github_repositories" "this" {
   for_each = toset(var.topics)
-  query = "${each.value} in:topics ${local.query}"
+  query    = "${each.value} in:topics ${local.query}"
 }
 
 data "github_repository" "this" {
   for_each = toset(flatten([for t in var.topics : [for r in data.github_repositories.this[t].names : r]]))
-  name = each.value
+  name     = each.value
 }
 
 resource "github_repository_file" "this" {
