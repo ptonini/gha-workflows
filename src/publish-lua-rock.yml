@@ -39,4 +39,5 @@ jobs:
       - release_please
     with:
       release_created: ${{ needs.release_please.outputs.release_created }}
+      release_version: ${{ needs.start.outputs.release_version }}
       tag_name: ${{ needs.release_please.outputs.tag_name }}

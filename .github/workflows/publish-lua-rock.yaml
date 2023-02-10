@@ -11,10 +11,18 @@ on:
         description: ''
         required: true
         type: string
+      release_version:
+        description: ''
+        required: true
+        type: string
+      
         
 jobs:
   publish_lua_rock:
     runs-on: ubuntu-latest
+    env:
+      ROCK_FILE: ${{ format('{0}-{1}-0.rockspeck', github.event.repository.name, inputs.release_version) }}
+      ROCK_FILE_PATTERN: ${{ format('{0}-{1}-0.*', github.event.repository.name, inputs.release_version) }}
     steps:
       - run: env | sort
       - uses: actions/checkout@v3
@@ -22,15 +30,18 @@ jobs:
       - uses: leafo/gh-actions-lua@v9
       - uses: leafo/gh-actions-luarocks@v4
       - run: cat template.rockspec | envsubst > ${ROCK_FILE}
+        env:
+          PACKAGE_NAME: ${{ github.event.repository.name }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
       - run: luarocks pack ${ROCK_FILE}
       - uses: actions/upload-artifact@v3
         with:
           name: luarock
-          path: ${{ env.ROCK_PREFIX }}-0.*
+          path: ${{ env.ROCK_FILE_PATTERN }}
       - uses: ptonini/gha-upload-release@main
         if: inputs.release_created == 'true'
         with:
-          file: ${{ env.ROCK_PREFIX }}-0.*
+          file: ${{ env.ROCK_FILE_PATTERN }}
           file_glob: true
           repo_token: ${{ github.token }}
           tag: ${{ inputs.tag_name }}
