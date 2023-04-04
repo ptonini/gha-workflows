@@ -17,6 +17,8 @@ jobs:
         if: github.event.repository.language == 'TypeScript'
       - run: go fmt || true
         if: github.event.repository.language == 'Go'
+      - run: (pip3 install ruff && ruff .) || true
+        if: github.event.repository.language == 'Python'
       - uses: ptonini/gha-config-git-user@main
       - uses: EndBug/add-and-commit@v9
         with:

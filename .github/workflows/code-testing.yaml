@@ -11,8 +11,8 @@ env:
   REPORTS_FOLDER: reports
   GO_COVERAGE_PROFILE: coverage.out
   GO_TEST_REPORT: report.out
-  PYTHON_COVERAGE_REPORT: "*coverage-*.xml"
-  PYTHON_XUNIT_REPORT: xunit-result-*.xml
+  PYTHON_COVERAGE_REPORT: coverage-report.xml
+  PYTHON_XUNIT_REPORT: xunit-report.xml
   JAVASCRIPT_LCOV_INFO: lcov.info
 
 jobs:
@@ -23,14 +23,21 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - run: mkdir -p ${{ env.REPORTS_FOLDER }}
-      - run: touch ${{ env.REPORTS_FOLDER }}/.placeholder
+      - run: mkdir -p ${{ env.REPORTS_FOLDER }} && touch ${{ env.REPORTS_FOLDER }}/.placeholder
       - uses: ptonini/gha-test-go@main
         if: github.event.repository.language == 'Go'
         with:
           reports_folder: ${{ env.REPORTS_FOLDER }}
           coverage_profile: ${{ env.GO_COVERAGE_PROFILE }}
           test_report: ${{ env.GO_TEST_REPORT }}
+      - uses: ptonini/gha-test-python@main
+        if: github.event.repository.language == 'Python'
+        with:
+          pypi_username: ${{ github.event.repository.name }}
+          pypi_password: ${{ github.token }}
+          reports_folder: ${{ env.REPORTS_FOLDER }}
+          coverage_report: ${{ env.PYTHON_COVERAGE_REPORT }}
+          xunit_report: ${{ env.PYTHON_XUNIT_REPORT }}
       - uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ github.token }}

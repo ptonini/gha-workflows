@@ -78,6 +78,14 @@ jobs:
       ENVIRONMENT: ${{ secrets.STAGING_ENVIRONMENT }}
       ORG_DOMAIN: ${{ secrets.ORG_DOMAIN }}
       ORG_APP_GROUPS: ${{ secrets.ORG_APP_GROUPS }}
+  performance_testing:
+    uses: ptonini/gha-workflows/.github/workflows/performance-testing.yaml@main
+    if: hashFiles('./k6-tests.js') != ''
+    needs:
+      - deploy_staging
+    with:
+      filename: ./k6-tests.js
+      hostnames: ${{ needs.deploy_staging.outputs.hostnames }}
   
   destroy_staging:
     uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main

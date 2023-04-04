@@ -1,0 +1,29 @@
+name: performance-testing
+
+on:
+  workflow_call:
+    inputs:
+      filename:
+        description: ''
+        required: false
+        type: string
+      hostnames:
+        description: ''
+        required: true
+        type: string
+
+jobs:
+  performance_testing:
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        hostname: ${{ fromJSON(inputs.hostnames) }}
+    steps:
+      - run: env | sort
+      - uses: actions/checkout@v3
+      - run: until nslookup ${{ matrix.hostname }} do; sleep 10; done
+      - uses: grafana/k6-action@v0.2.0
+        with:
+          filename: ${{ inputs.filename }}
+          flags: --env HOSTNAME=${{ matrix.hostname }}

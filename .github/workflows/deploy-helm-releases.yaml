@@ -48,11 +48,16 @@ on:
       VAULT_GITHUB_TOKEN_PATH:
         description: ''
         required: false
-        
+    outputs:
+      hostnames:
+        description: ''
+        value: ${{ jobs.deploy_helm_releases.outputs.hostnames }}
 
 jobs:
   deploy_helm_releases:
     runs-on: ubuntu-latest
+    outputs:
+      hostnames: ${{ steps.releases.outputs.hostnames }}
     steps:
       - run: env | sort
       - uses: ptonini/gha-openvpn@main
