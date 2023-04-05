@@ -16,6 +16,9 @@ on:
       - main
       - legacy/*
 
+env:
+  CONTAINER_REPOSITORY: ${{ format('ghcr.io/{}', github.event.repository.full_name ) }}
+
 jobs:
   
   code_testing:
@@ -43,7 +46,7 @@ jobs:
     needs:
       - start
     with:
-      repository: ${{ needs.start.outputs.docker_repository }}
+      repository: ${{ env.CONTAINER_REPOSITORY }}
       tags: ${{ format('latest pr{0}', github.event.number) }}
     secrets:
       BUILD_ARGUMENTS: |
@@ -56,6 +59,7 @@ jobs:
     needs:
       - start
     with:
+      repository: ${{ env.CONTAINER_REPOSITORY }}
       source_tag: ${{ format('pr{0}', github.event.pull_request.number) }}
       tag: pr-approved
   
@@ -65,5 +69,6 @@ jobs:
     needs:
       - start
     with:
+      repository: ${{ env.CONTAINER_REPOSITORY }}
       source_tag: pr-approved
       tag: ${{ needs.start.outputs.release_version }}
