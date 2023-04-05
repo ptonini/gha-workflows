@@ -40,7 +40,5 @@ jobs:
           registry: ${{ inputs.registry }}
           username: ${{ env.USERNAME }}
           password: ${{ env.PASSWORD }}
-      - run: docker pull ${{ inputs.repository }}:${{ inputs.source_tag }}
-      - run: docker tag ${{ inputs.repository }}:${{ inputs.source_tag }} ${{ inputs.repository }}:${{ inputs.tag }}
-      - run: docker push ${{ inputs.repository }}:${{ inputs.tag }}
-
+      - run: echo "DIGEST=$(docker manifest inspect --verbose  ${{ inputs.repository }}:${{ inputs.source_tag }} | jq -r .Descriptor.digest)" | tee -a $GITHUB_ENV
+      - run: docker buildx imagetools create ${{ inputs.repository }}@${DIGEST} --tag ${{ inputs.repository }}:${{ inputs.tag }}

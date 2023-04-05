@@ -3,6 +3,16 @@ name: publish-go-application
 on:
   workflow_call:
     inputs:
+      app_name:
+        description: ''
+        default: ${{ github.event.repository.name }}
+        required: false
+        type: string
+      main_file:
+        description: ''
+        default: main.go
+        required: false
+        type: string
       tag_name:
         description: ''
         required: true
@@ -20,8 +30,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ptonini/gha-load-metadata@main
       - run: mkdir dist
-      - run: docker run -v $(pwd):$(pwd) -w $(pwd) ${GO_BUILDER_IMAGE} go build -o dist/${GO_APP_NAME} ${GO_MAIN_FILE}
-      - run: sha256sum dist/${GO_APP_NAME} > dist/SHA256SUMS
+      - run: docker run -v $(pwd):$(pwd) -w $(pwd) ${GO_BUILDER_IMAGE} go build -o dist/${{ inputs.app_name }} ${GO_MAIN_FILE}
+      - run: sha256sum dist/${{ ${{ inputs.app_name }} }} > dist/SHA256SUMS
       - uses: actions/upload-artifact@v3
         with:
           name: application
