@@ -7,6 +7,10 @@ on:
         description: ''
         required: true
         type: string
+      vault_addr:
+        description: ''
+        required: true
+        type: string
       vault_method:
         description: ''
         default: jwt
@@ -22,14 +26,12 @@ on:
         default: workflow
         required: false
         type: string
+      vault_k8s_role_path:
+        description: ''
+        required: true
+        type: string
     secrets:
       OPENVPN_CONFIG:
-        description: ''
-        required: true
-      VAULT_ADDR:
-        description: ''
-        required: true
-      VAULT_K8S_ROLE_PATH:
         description: ''
         required: true
 
@@ -51,7 +53,7 @@ jobs:
           method: ${{ inputs.vault_method }}
           path: ${{ inputs.vault_path }}
           role: ${{ inputs.vault_role }}
-          url: ${{ secrets.VAULT_ADDR }}
+          url: ${{ inputs.vault_addr }}
           secrets: ${{ secrets.VAULT_K8S_ROLE_PATH }} kube_config | KUBECONFIG_CONTENT;
       - run: echo "NAMESPACE=${NS//_/-}" | tee -a ${GITHUB_ENV}
         env:

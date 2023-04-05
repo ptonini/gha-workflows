@@ -47,8 +47,8 @@ jobs:
   start:
     uses: ptonini/gha-workflows/.github/workflows/start.yaml@main
     if: (!startsWith(github.event.pull_request.head.ref, 'release-please--'))
-    secrets:
-      VAULT_K8S_ROLE_PATHS: ${{ secrets.VAULT_K8S_ROLE_PATHS }}
+    with:
+      vault_k8s_role_paths: ${{ vars.vault_k8s_role_paths }}
   
   build_candidate:
     uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
@@ -56,7 +56,7 @@ jobs:
     needs:
       - start
     with:
-      repository: ${{ format('ghcr.io/{0}', github.event.repository.full_name ) }}
+      repository: ${{ format('{0}/{1}', vars.container_registry, github.event.repository.name ) }}
       tags: ${{ format('latest pr{0}', github.event.number) }}
     secrets:
       BUILD_ARGUMENTS: |
@@ -70,20 +70,20 @@ jobs:
     with:
       namespace: ${{ format('{0}-{1}', github.event.repository.name, github.event.number) }}
       digest: ${{ needs.build_candidate.outputs.digest }}
+      environment: ${{ vars.staging_environment }}
+      org_domain: ${{ vars.org_domain }}
+      app_groups: ${{ vars.app_groups }}
+      vault_addr: ${{ vars.vault_addr }}
+      vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
+      vault_github_token_path: ${{ vars.vault_github_token_path }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-      VAULT_K8S_ROLE_PATH: ${{ secrets.VAULT_K8S_STAGING_ROLE_PATH }}
-      VAULT_GITHUB_TOKEN_PATH: ${{ secrets.VAULT_GITHUB_TOKEN_PATH }}
-      ENVIRONMENT: ${{ secrets.STAGING_ENVIRONMENT }}
-      ORG_DOMAIN: ${{ secrets.ORG_DOMAIN }}
-      ORG_APP_GROUPS: ${{ secrets.ORG_APP_GROUPS }}
   performance_testing:
     uses: ptonini/gha-workflows/.github/workflows/performance-testing.yaml@main
     needs:
       - deploy_staging
     with:
-      filename: ./k6-tests.js
+      filename: k6-tests.js
       hostnames: ${{ needs.deploy_staging.outputs.hostnames }}
   
   destroy_staging:
@@ -93,10 +93,10 @@ jobs:
       - start
     with:
       namespace: ${{ format('{0}-{1}', github.event.repository.name, github.event.number) }}
+      vault_addr: ${{ vars.vault_addr }}
+      vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-      VAULT_K8S_ROLE_PATH: ${{ secrets.VAULT_K8S_STAGING_ROLE_PATH }}
   
   approve_candidate:
     uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main
@@ -104,7 +104,7 @@ jobs:
     needs:
       - start
     with:
-      repository: ${{ format('ghcr.io/{0}', github.event.repository.full_name ) }}
+      repository: ${{ format('{0}/{1}', vars.container_registry, github.event.repository.name ) }}
       source_tag: ${{ format('pr{0}', github.event.pull_request.number) }}
       tag: pr-approved
   
@@ -114,7 +114,7 @@ jobs:
     needs:
       - start
     with:
-      repository: ${{ format('ghcr.io/{0}', github.event.repository.full_name ) }}
+      repository: ${{ format('{0}/{1}', vars.container_registry, github.event.repository.name ) }}
       source_tag: pr-approved
       tag: ${{ needs.start.outputs.release_version }}
   deploy_production:
@@ -122,7 +122,8 @@ jobs:
     needs:
       - promote_candidate
       - start
+    with:
+      vault_addr: ${{ vars.vault_addr }}
+      vault_k8s_role_path: ${{ needs.start.outputs.vault_k8s_role_path }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-      VAULT_K8S_ROLE_PATH: ${{ needs.start.outputs.vault_k8s_role_path }}

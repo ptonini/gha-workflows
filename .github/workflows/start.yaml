@@ -2,17 +2,15 @@ name: startup
 
 on:
   workflow_call:
-    secrets:
-      VAULT_K8S_ROLE_PATHS:
+    inputs:
+      vault_k8s_role_paths:
         description: ''
         required: false
+        type: string
     outputs:
       release_version:
         description: ''
         value: ${{ jobs.startup.outputs.release_version }}
-      docker_repository:
-        description: ''
-        value: ${{ jobs.startup.outputs.docker_repository }}
       vault_k8s_role_path:
         description: ''
         value: ${{ jobs.startup.outputs.vault_k8s_role_path }}
@@ -22,7 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release_version: ${{ steps.get_metadata.outputs.release_version }}
-      docker_repository: ${{ steps.get_metadata.outputs.docker_repository }}
       vault_k8s_role_path: ${{ steps.get_metadata.outputs.vault_k8s_role_path }}
     steps:
       - run: env | sort
@@ -31,4 +28,4 @@ jobs:
       - uses: ptonini/gha-get-metadata@main
         id: get_metadata
         with:
-          vault_k8s_role_paths: ${{ secrets.VAULT_K8S_ROLE_PATHS }}
+          vault_k8s_role_paths: ${{ inputs.vault_k8s_role_paths }}
