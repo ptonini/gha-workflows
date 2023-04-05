@@ -46,7 +46,7 @@ jobs:
     needs:
       - start
     with:
-      repository: ${{ env.CONTAINER_REPOSITORY }}
+      repository: ${{ format('ghcr.io/{}', github.event.repository.full_name ) }}
       tags: ${{ format('latest pr{0}', github.event.number) }}
     secrets:
       BUILD_ARGUMENTS: |
@@ -59,7 +59,7 @@ jobs:
     needs:
       - start
     with:
-      repository: ${{ env.CONTAINER_REPOSITORY }}
+      repository: ${{ format('ghcr.io/{}', github.event.repository.full_name ) }}
       source_tag: ${{ format('pr{0}', github.event.pull_request.number) }}
       tag: pr-approved
   
@@ -69,6 +69,6 @@ jobs:
     needs:
       - start
     with:
-      repository: ${{ env.CONTAINER_REPOSITORY }}
+      repository: ${{ format('ghcr.io/{}', github.event.repository.full_name ) }}
       source_tag: pr-approved
       tag: ${{ needs.start.outputs.release_version }}
