@@ -16,14 +16,12 @@ jobs:
   performance_testing:
     timeout-minutes: 5
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        hostname: ${{ fromJSON(inputs.hostnames) }}
     steps:
       - run: env | sort
       - uses: actions/checkout@v3
-      - run: until nslookup ${{ matrix.hostname }} do; sleep 10; done
+      - run: until nslookup ${{ inputs.hostname }}; do sleep 10; done
       - uses: grafana/k6-action@v0.2.0
+        if: hashFiles('k6-tests.js')
         with:
           filename: ${{ inputs.filename }}
-          flags: --env HOSTNAME=${{ matrix.hostname }}
+          flags: --env HOSTNAMES=${{ inputs.hostnames }}
