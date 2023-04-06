@@ -43,7 +43,7 @@ jobs:
     needs:
       - start
     with:
-      repository: ${{ format('{0}/{1}', vars.container_registry, github.event.repository.full_name ) }}
+      repository: ${{ format('{0}/{1}', vars.container_registry, github.event.repository.name ) }}
       tags: ${{ format('latest pr{0}', github.event.number) }}
     secrets:
       BUILD_ARGUMENTS: |
@@ -51,14 +51,13 @@ jobs:
         BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
   
   approve_candidate:
-    uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/approve-image.yaml@main
     if: github.event.pull_request.merged
     needs:
       - start
     with:
-      repository: ${{ format('{0}/{1}', vars.container_registry, github.event.repository.full_name ) }}
-      source_tag: ${{ format('pr{0}', github.event.pull_request.number) }}
-      tag: pr-approved
+      repository: ${{ format('{0}/{1}', vars.container_registry, github.event.repository.name ) }}
+      approved_tag: ${{ format('pr{0}', github.event.pull_request.number) }}
   
   promote_candidate:
     uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main

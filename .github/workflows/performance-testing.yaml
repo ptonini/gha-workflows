@@ -3,11 +3,7 @@ name: performance-testing
 on:
   workflow_call:
     inputs:
-      filename:
-        description: ''
-        required: false
-        type: string
-      hostnames:
+      hosts:
         description: ''
         required: true
         type: string
@@ -16,16 +12,11 @@ jobs:
   performance_testing:
     timeout-minutes: 5
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        hostname: ${{ fromJSON(inputs.hostnames) }}
     steps:
       - run: env | sort
       - uses: actions/checkout@v3
-      - run: until nslookup ${{ matrix.hostname }}; do sleep 10; done
-        if: hashFiles(inputs.filename)
       - uses: grafana/k6-action@v0.2.0
-        if: hashFiles(inputs.filename)
+        if: hashFiles(vars.k6_test_file)
         with:
-          filename: ${{ inputs.filename }}
-          flags: --env HOSTNAME=${{ matrix.hostname }}
+          filename: ${{ vars.k6_test_file }}
+          flags: --env HOSTS=${{ inputs.hosts }}

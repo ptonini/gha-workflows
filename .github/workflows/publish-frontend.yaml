@@ -7,16 +7,10 @@ on:
         description: ''
         required: true
         type: string
-      nodejs_version:
-        type: string
-        description: ''
-        required: false
-        default: '16.10.0'
     secrets:
       NPM_TOKEN:
         description: ''
         required: false
-        
 
 jobs:
   publish_frontend:
@@ -29,7 +23,7 @@ jobs:
       - uses: ptonini/gha-load-metadata@main
       - uses: actions/setup-node@v2
         with:
-          node-version: ${{ inputs.nodejs_version }}
+          node-version: ${{ vars.nodejs_version }}
       - run: yarn install --prod && yarn build
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

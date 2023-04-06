@@ -1,0 +1,25 @@
+name: promote-image
+
+on:
+  workflow_call:
+    inputs:
+      repository:
+        description: ''
+        required: true
+        type: string
+
+jobs:
+  promote_image:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - uses: actions/checkout@v3
+      - run: echo "VERSION=$(jq -r '."."' < ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
+      - uses: ptonini/gha-retag-docker-image@main
+        with:
+          registry: ${{ vars.container_registry }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+          repository: ${{ inputs.repository }}
+          source_tag: ${{ vars.pr_approved_tag }}
+          tags: ${{ env.VERSION }}

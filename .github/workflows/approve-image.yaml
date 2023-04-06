@@ -1,0 +1,27 @@
+name: approve-image
+
+on:
+  workflow_call:
+    inputs:
+      repository:
+        description: ''
+        required: true
+        type: string
+      approved_tag:
+        description: ''
+        required: true
+        type: string
+
+jobs:
+  approve_image:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - uses: ptonini/gha-retag-docker-image@main
+        with:
+          registry: ${{ vars.container_registry }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+          repository: ${{ inputs.repository }}
+          source_tag: ${{ inputs.approved_tag }}
+          tags: latest ${{ vars.pr_approved_tag }} ${{ inputs.approved_tag }}

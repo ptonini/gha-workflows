@@ -24,11 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
-      - uses: ptonini/gha-load-metadata@main
       - uses: ptonini/gha-openvpn@main
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
-          validation_addr: ${{ secrets.VAULT_ADDR }}
+          validation_addr: ${{ vars.vault_addr }}
       - uses: hashicorp/vault-action@v2.4.3
         with:
           method: ${{ vars.vault_method }}

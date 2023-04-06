@@ -31,6 +31,9 @@ jobs:
       - uses: ptonini/gha-publish-docker-image@main
         id: publish_image
         with:
+          registry: ${{ vars.container_registry }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
           repository: ${{ inputs.repository }}
           tags: ${{ inputs.tags }}
           build_arguments: ${{ secrets.BUILD_ARGUMENTS }}

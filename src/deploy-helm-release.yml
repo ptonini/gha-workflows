@@ -44,20 +44,12 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
   
-  start:
-    uses: ptonini/gha-workflows/.github/workflows/start.yaml@main
-    if: (!startsWith(github.event.pull_request.head.ref, 'release-please--'))
-    with:
-      vault_k8s_role_paths: ${{ vars.vault_k8s_role_paths }}
-  
   build_candidate:
     uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
     if:  github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
-    needs:
-      - start
     with:
       repository: ${{ format('{0}/{1}', vars.container_registry, github.event.repository.name ) }}
-      tags: ${{ format('latest pr{0}', github.event.number) }}
+      tags: ${{ format('latest pr{0} pr{0}-{1}', github.event.number, github.run_number) }}
     secrets:
       BUILD_ARGUMENTS: |
         BUILD_USERNAME=${{ github.actor }}
@@ -80,45 +72,41 @@ jobs:
     needs:
       - deploy_staging
     with:
-      filename: k6-tests.js
-      hostnames: ${{ needs.deploy_staging.outputs.hostnames }}
+      hosts: ${{ needs.deploy_staging.outputs.hostnames }}
   
   destroy_staging:
     uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
     if:  github.event_name == 'pull_request' && github.event.action == 'closed' && !contains(github.event.repository.topics, 'skip-staging')
-    needs:
-      - start
     with:
       namespace: ${{ format('{0}-{1}', github.event.repository.name, github.event.number) }}
       vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
   
-  approve_candidate:
-    uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main
+  approve_image:
+    uses: ptonini/gha-workflows/.github/workflows/approve-image.yaml@main
     if: github.event.pull_request.merged
-    needs:
-      - start
     with:
       repository: ${{ format('{0}/{1}', vars.container_registry, github.event.repository.name ) }}
-      source_tag: ${{ format('pr{0}', github.event.pull_request.number) }}
-      tag: pr-approved
+      approved_tag: ${{ format('pr{0}', github.event.number) }}
   
-  promote_candidate:
-    uses: ptonini/gha-workflows/.github/workflows/retag-docker-image.yaml@main
+  promote_image:
+    uses: ptonini/gha-workflows/.github/workflows/promote-image.yaml@main
     if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]')
-    needs:
-      - start
     with:
       repository: ${{ format('{0}/{1}', vars.container_registry, github.event.repository.name ) }}
-      source_tag: pr-approved
-      tag: ${{ needs.start.outputs.release_version }}
-  deploy_production:
+  read_manifests:
+    uses: ptonini/gha-workflows/.github/workflows/start.yaml@main
+    if: (!startsWith(github.event.pull_request.head.ref, 'release-please--'))
+    needs:
+      - promote_image
+    with:
+      vault_k8s_role_paths: ${{ vars.vault_k8s_role_paths }}
+  deploy_image:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     needs:
-      - promote_candidate
-      - start
+      - read_manifests
     with:
-      vault_k8s_role_path: ${{ needs.start.outputs.vault_k8s_role_path }}
+      vault_k8s_role_path: ${{ needs.read_manifests.outputs.vault_k8s_role_path }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}

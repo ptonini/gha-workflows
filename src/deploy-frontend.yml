@@ -52,7 +52,7 @@ jobs:
   
   build_candidate:
     uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
-    if:  github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
+    if:  github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && !contains(github.event.repository.topics, 'skip-staging')
     needs:
       - start
     with:
@@ -64,7 +64,6 @@ jobs:
         BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
   deploy_staging:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
-    if: (!contains(github.event.repository.topics, 'skip-staging'))
     needs:
       - build_candidate
     with:
