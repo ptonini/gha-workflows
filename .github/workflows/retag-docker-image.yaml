@@ -40,5 +40,4 @@ jobs:
           registry: ${{ inputs.registry }}
           username: ${{ env.USERNAME }}
           password: ${{ env.PASSWORD }}
-      - run: echo "DIGEST=$(docker manifest inspect --verbose  ${{ inputs.repository }}:${{ inputs.source_tag }} | jq -r .Descriptor.digest)" | tee -a $GITHUB_ENV
-      - run: docker buildx imagetools create ${{ inputs.repository }}@${DIGEST} --tag ${{ inputs.repository }}:${{ inputs.tag }}
+      - run: docker buildx imagetools create ${{ inputs.repository }}:${{ inputs.source_tag }} --tag ${{ inputs.repository }}:${{ inputs.tag }}

@@ -27,12 +27,14 @@ jobs:
       - uses: ptonini/gha-test-go@main
         if: github.event.repository.language == 'Go'
         with:
+          go_version: ${{ vars.go_version }}
           reports_folder: ${{ env.REPORTS_FOLDER }}
           coverage_profile: ${{ env.GO_COVERAGE_PROFILE }}
           test_report: ${{ env.GO_TEST_REPORT }}
       - uses: ptonini/gha-test-python@main
         if: github.event.repository.language == 'Python'
         with:
+          python_version: ${{ vars.python_version }}
           pypi_username: ${{ github.event.repository.name }}
           pypi_password: ${{ github.token }}
           reports_folder: ${{ env.REPORTS_FOLDER }}

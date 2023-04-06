@@ -68,12 +68,9 @@ jobs:
     needs:
       - build_candidate
     with:
+      environment: ${{ vars.staging_environment }}
       namespace: ${{ format('{0}-{1}', github.event.repository.name, github.event.number) }}
       digest: ${{ needs.build_candidate.outputs.digest }}
-      environment: ${{ vars.staging_environment }}
-      org_domain: ${{ vars.org_domain }}
-      app_groups: ${{ vars.app_groups }}
-      vault_addr: ${{ vars.vault_addr }}
       vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
       vault_github_token_path: ${{ vars.vault_github_token_path }}
     secrets:
@@ -93,7 +90,6 @@ jobs:
       - start
     with:
       namespace: ${{ format('{0}-{1}', github.event.repository.name, github.event.number) }}
-      vault_addr: ${{ vars.vault_addr }}
       vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
@@ -123,7 +119,6 @@ jobs:
       - promote_candidate
       - start
     with:
-      vault_addr: ${{ vars.vault_addr }}
       vault_k8s_role_path: ${{ needs.start.outputs.vault_k8s_role_path }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}

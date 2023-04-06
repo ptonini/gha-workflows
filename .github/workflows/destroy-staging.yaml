@@ -7,25 +7,6 @@ on:
         description: ''
         required: true
         type: string
-      vault_addr:
-        description: ''
-        required: true
-        type: string
-      vault_method:
-        description: ''
-        default: jwt
-        required: false
-        type: string
-      vault_path:
-        description: ''
-        default: oidc/github
-        required: false
-        type: string
-      vault_role:
-        description: ''
-        default: workflow
-        required: false
-        type: string
       vault_k8s_role_path:
         description: ''
         required: true
@@ -50,11 +31,11 @@ jobs:
           validation_addr: ${{ secrets.VAULT_ADDR }}
       - uses: hashicorp/vault-action@v2.4.3
         with:
-          method: ${{ inputs.vault_method }}
-          path: ${{ inputs.vault_path }}
-          role: ${{ inputs.vault_role }}
-          url: ${{ inputs.vault_addr }}
-          secrets: ${{ secrets.VAULT_K8S_ROLE_PATH }} kube_config | KUBECONFIG_CONTENT;
+          method: ${{ vars.vault_method }}
+          path: ${{ vars.vault_path }}
+          role: ${{ vars.vault_role }}
+          url: ${{ vars.vault_addr }}
+          secrets: ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG_CONTENT;
       - run: echo "NAMESPACE=${NS//_/-}" | tee -a ${GITHUB_ENV}
         env:
           NS: ${{ inputs.namespace }}
