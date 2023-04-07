@@ -34,7 +34,7 @@ jobs:
     if: github.event_name == 'push'
   
   start:
-    uses: ptonini/gha-workflows/.github/workflows/start.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/read-manifests.yaml@main
     if: (!contains(github.event.pull_request.head.ref, 'release-please--'))
   
   build_candidate:

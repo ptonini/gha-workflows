@@ -44,7 +44,7 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
   
-  build_candidate:
+  publish_image:
     uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
     if:  github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
     with:
@@ -58,11 +58,11 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     if: (!contains(github.event.repository.topics, 'skip-staging'))
     needs:
-      - build_candidate
+      - publish_image
     with:
       environment: ${{ vars.staging_environment }}
       namespace: ${{ format('{0}-{1}', github.event.repository.name, github.event.number) }}
-      digest: ${{ needs.build_candidate.outputs.digest }}
+      digest: ${{ needs.publish_image.outputs.digest }}
       vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
       vault_github_token_path: ${{ vars.vault_github_token_path }}
     secrets:
@@ -76,7 +76,7 @@ jobs:
   
   destroy_staging:
     uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
-    if:  github.event_name == 'pull_request' && github.event.action == 'closed' && !contains(github.event.repository.topics, 'skip-staging')
+    if:  github.event_name == 'pull_request' && github.event.action == 'closed' && !contains(github.event.repository.topics, 'skip-staging') && !startsWith(github.event.pull_request.head.ref, 'release-please--')
     with:
       namespace: ${{ format('{0}-{1}', github.event.repository.name, github.event.number) }}
       vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
@@ -85,7 +85,7 @@ jobs:
   
   approve_image:
     uses: ptonini/gha-workflows/.github/workflows/approve-image.yaml@main
-    if: github.event.pull_request.merged
+    if: github.event.pull_request.merged && !startsWith(github.event.pull_request.head.ref, 'release-please--')
     with:
       repository: ${{ format('{0}/{1}', vars.container_registry, github.event.repository.name ) }}
       approved_tag: ${{ format('pr{0}', github.event.number) }}
@@ -96,7 +96,7 @@ jobs:
     with:
       repository: ${{ format('{0}/{1}', vars.container_registry, github.event.repository.name ) }}
   read_manifests:
-    uses: ptonini/gha-workflows/.github/workflows/start.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/read-manifests.yaml@main
     if: (!startsWith(github.event.pull_request.head.ref, 'release-please--'))
     needs:
       - promote_image

@@ -1,4 +1,4 @@
-name: startup
+name: read-manifests
 
 on:
   workflow_call:
@@ -16,7 +16,7 @@ on:
         value: ${{ jobs.startup.outputs.vault_k8s_role_path }}
       
 jobs:
-  startup:
+  read_manifests:
     runs-on: ubuntu-latest
     outputs:
       release_version: ${{ steps.get_metadata.outputs.release_version }}

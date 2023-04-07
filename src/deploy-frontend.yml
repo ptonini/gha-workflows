@@ -45,7 +45,7 @@ jobs:
     if: github.event_name == 'push'
   
   start:
-    uses: ptonini/gha-workflows/.github/workflows/start.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/read-manifests.yaml@main
     if: (!startsWith(github.event.pull_request.head.ref, 'release-please--'))
     secrets:
       VAULT_K8S_ROLE_PATHS: ${{ secrets.VAULT_K8S_ROLE_PATHS }}
