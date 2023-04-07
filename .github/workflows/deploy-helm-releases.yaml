@@ -62,12 +62,15 @@ jobs:
       - uses: ptonini/gha-prepare-helm-releases@main
         id: releases
         with:
-          github_token: ${{ env.GH_TOKEN }}
           digest: ${{ inputs.digest }}
           namespace: ${{ inputs.namespace }}
           environment: ${{ inputs.environment }}
+          github_token: ${{ env.GH_TOKEN }}
+          manifest_file: ${{ vars.manifest_file }}
+          rp_manifest_file: ${{ vars.rp_manifest_file }}
+          ingress_configs_repository: ${{ vars.ingress_configs_repository }}
           org_domain: ${{ vars.org_domain }}
-          org_app_groups: ${{ vars.app_groups }}
+          app_groups: ${{ vars.app_groups }}
       - uses: actions/upload-artifact@v3
         with:
           name: releases
