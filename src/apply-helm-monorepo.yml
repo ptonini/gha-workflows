@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   detect_changes:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/detect-changes.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/detect-changes.yaml@main
   apply_releases:
     runs-on: ubuntu-latest
     if: needs.detect_changes.outputs.changes != '[]'

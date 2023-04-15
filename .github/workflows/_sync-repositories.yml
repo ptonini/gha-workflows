@@ -1,0 +1,46 @@
+name: sync-repositories
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  detect_changes:
+    uses: ptonini/gha-workflows/.github/workflows/detect-changes.yaml@main
+    with:
+      filters: |
+        workflows:
+          - '.github/workflows/*'
+          - '!.github/workflows/_*'
+        src:
+          - 'src/*'
+  sync_folders:
+    runs-on: ubuntu-latest
+    if: needs.detect_changes.outputs.changes != '[]'
+    needs:
+      - detect_changes
+    strategy:
+      matrix:
+        repository: ${{ fromJson(vars.child_repositories) }}
+    steps:
+      - run: env | sort
+      - run: echo ${{ needs.detect_changes.outputs.changes }}
+      - uses: ptonini/gha-config-git-user@main
+      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ matrix.repository }}
+          ssh-key: ${{ secrets.CHILD_REPOSITORY_DEPLOY_KEY_0 }}
+          branch: main
+          path: child_repository
+      - run: sed -i 's/${GITHUB_REPOSITORY}/${{ matrix.repository }}/g' src/*
+        if: contains(fromJson(needs.detect_changes.outputs.changes), 'src')
+      - run: rsync -vr .src child_repository
+        if: contains(fromJson(needs.detect_changes.outputs.changes), 'src')
+      - run: rsync -vr --exclude '_*' .github/workflows child_repository/.github
+        if: contains(fromJson(needs.detect_changes.outputs.changes), 'workflows')
+      - uses: EndBug/add-and-commit@v9
+        with:
+          cwd: ./child_repository
+          message: "chore: synchronized from ${{ github.event.repository.full_name }}"

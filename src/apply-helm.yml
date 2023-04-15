@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   apply_release:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/deploy-helm-releases.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     with:
       vault_k8s_role_path: ${{ vars.vault_k8s_role_path }}
     secrets:

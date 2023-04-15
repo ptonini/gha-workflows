@@ -30,22 +30,22 @@ permissions:
 jobs:
   
   code_testing:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/code-testing.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/code-testing.yaml@main
     if: github.event.action != 'closed' && github.event.head_commit.author.name != 'github-actions[bot]' && vars.skip_testing != 'true'
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   code_linting:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/code-linting.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && vars.skip_linting != 'true'
   security_scan:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/trufflehog.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/trufflehog.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
   release_please:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/release-please.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
   
   publish_image:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/publish-docker-image.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
     if:  github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
     with:
       tags: ${{ format('latest pr{0} pr{0}-{1}', github.event.number, github.run_number) }}
@@ -54,7 +54,7 @@ jobs:
         BUILD_USERNAME=${{ github.actor }}
         BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
   deploy_to_staging:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/deploy-helm-releases.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     if: vars.skip_staging != 'true'
     needs:
       - publish_image
@@ -64,7 +64,7 @@ jobs:
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
   performance_testing:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/performance-testing.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/performance-testing.yaml@main
     if: vars.performance_testing == 'true'
     needs:
       - deploy_to_staging
@@ -72,7 +72,7 @@ jobs:
       hosts: ${{ needs.deploy_to_staging.outputs.hostnames }}
   
   destroy_staging:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/destroy-staging.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
     if: github.event_name == 'pull_request' && github.event.action == 'closed' && !startsWith(github.event.pull_request.head.ref, 'release-please--') && vars.skip_staging != 'true'
     with:
       vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
@@ -80,16 +80,16 @@ jobs:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
   
   approve_image:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/approve-image.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/approve-image.yaml@main
     if: github.event.pull_request.merged && !startsWith(github.event.pull_request.head.ref, 'release-please--')
     with:
       approved_tag: ${{ format('pr{0}', github.event.number) }}
   
   promote_image:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/promote-image.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/promote-image.yaml@main
     if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]')
   deploy_to_production:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/deploy-helm-releases.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     needs:
       - promote_image
     with:

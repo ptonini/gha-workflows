@@ -1,0 +1,29 @@
+name: publish
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - rocks/**
+
+jobs:
+  release_please:
+    uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
+    if: github.event_name == 'push'
+  publish_rocks:
+    uses: ptonini/gha-workflows/.github/workflows/publish-lua-rock.yaml@main
+    if: needs.release_please.outputs.releases_created == 'true'
+    needs:
+      - release_please
+    strategy:
+      matrix:
+        path: ${{ fromJson(needs.release_please.outputs.paths_released) }}
+    with:
+      path: ${{ matrix.path }}
+      packages: ${{ fromJson(needs.release_please.outputs.packages) }}
+  update_repository:
+    uses: ptonini/gha-workflows/.github/workflows/update-rocks-repository.yaml@main
+    needs:
+      - publish_rocks

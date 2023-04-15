@@ -2,6 +2,12 @@ name: detect-changes
 
 on:
   workflow_call:
+    inputs:
+      filters:
+        description: ''
+        default: filters.yaml
+        required: false
+        type: string
     outputs:
       changes:
         description: ''
@@ -14,10 +20,10 @@ jobs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:
       - run: env | sort
-      - run: jq . ${{ github.event_path }}
       - uses: actions/checkout@v3
       - run: '[[ -e ./filters.yaml ]] || bash build_filters > filters.yaml'
+        if: ${{ inputs.filters }} == "filters.yaml"
       - uses: dorny/paths-filter@v2
         id: filter
         with:
-          filters: filters.yaml
+          filters: ${{ inputs.filters }}

@@ -7,6 +7,10 @@ on:
         description: ''
         required: true
         type: string
+      packages:
+        description: ''
+        required: true
+        type: string
 
 jobs:
   publish_lua_rocks:
@@ -15,22 +19,19 @@ jobs:
       - uses: actions/checkout@v3
       - uses: leafo/gh-actions-lua@v9
       - uses: leafo/gh-actions-luarocks@v4
-      - uses: actions/download-artifact@v3
-        with:
-          name: release-please-outputs
-      - run: echo "PACKAGE=$(echo "${{ inputs.path }}" | awk -F/ '{ print $2 }' )" | tee -a $GITHUB_ENV
-      - run: echo "VERSION=$(jq -r --arg A "${{ inputs.path }}--version" '.[$A]' outputs)" | tee -a $GITHUB_ENV
-      - run: echo "TAG_NAME=$(jq -r --arg A "${{ inputs.path }}--tag_name" '.[$A]' outputs)" | tee -a $GITHUB_ENV
+      - run: echo "PACKAGE=$(jq -r '."${{ inputs.path }}".package_name' <<< '${{ inputs.packages }}')" | tee -a $GITHUB_ENV
+      - run: echo "TAG_NAME=$(jq -r  '."${{ inputs.path }}".tag_name' <<< '${{ inputs.packages }}')" | tee -a $GITHUB_ENV
+      - run: echo "VERSION=$(jq -r  '."${{ inputs.path }}".version' <<< '${{ inputs.packages }}')" | tee -a $GITHUB_ENV
       - run: tar -czvC rocks -f ${{ inputs.path }}.tar.gz ${PACKAGE}
       - run: envsubst < ${{ inputs.path }}/rockspec > ${PACKAGE}-${VERSION}-1.rockspec
-      - run: luarocks pack ${{ env.PACKAGE }}-${{ env.VERSION }}-1.rockspec
+      - run: luarocks pack ${PACKAGE}-${VERSION}-1.rockspec
       - uses: actions/upload-artifact@v3
         with:
           name: rocks
-          path: ${{ env.PACKAGE }}-${{ env.VERSION }}*
+          path: ${{ env.PACKAGE }}-${{ env.VERSION }}-*
       - uses: ptonini/gha-upload-release@main
         with:
-          file: ${{ env.PACKAGE }}-${{ env.VERSION }}*
+          file: ${{ env.PACKAGE }}-${{ env.VERSION }}-*
           file_glob: true
           repo_token: ${{ github.token }}
           tag: ${{ env.TAG_NAME }}
