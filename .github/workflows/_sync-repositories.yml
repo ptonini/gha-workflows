@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - .github/workflows/_sync-repositories.yml
 
 jobs:
   detect_changes:
@@ -12,7 +14,7 @@ jobs:
       filters: |
         workflows:
           - '.github/workflows/*'
-          - '!.github/workflows/_*'
+          - '!.github/workflows/_sync-repositories.yml'
         src:
           - 'src/*'
   sync_folders:
