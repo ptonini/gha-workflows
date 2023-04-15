@@ -19,4 +19,6 @@ jobs:
         if: hashFiles(vars.k6_test_file)
         with:
           filename: ${{ vars.k6_test_file }}
-          flags: --env HOSTS=${{ inputs.hosts }}
+        env:
+          HOSTS: ${{ inputs.hosts }}
+          SCHEMA: https

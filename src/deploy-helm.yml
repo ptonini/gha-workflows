@@ -46,7 +46,7 @@ jobs:
   
   publish_image:
     uses: nodis-com-br/github-actions-workflows/.github/workflows/publish-docker-image.yaml@main
-    if:  github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && vars.skip_staging != 'true'
+    if:  github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
     with:
       tags: ${{ format('latest pr{0} pr{0}-{1}', github.event.number, github.run_number) }}
     secrets:
@@ -55,6 +55,7 @@ jobs:
         BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
   deploy_to_staging:
     uses: nodis-com-br/github-actions-workflows/.github/workflows/deploy-helm-releases.yaml@main
+    if: vars.skip_staging != 'true'
     needs:
       - publish_image
     with:
@@ -62,6 +63,13 @@ jobs:
       digest: ${{ needs.publish_image.outputs.digest }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+  performance_testing:
+    uses: nodis-com-br/github-actions-workflows/.github/workflows/performance-testing.yaml@main
+    if: vars.performance_testing == 'true'
+    needs:
+      - deploy_to_staging
+    with:
+      hosts: ${{ needs.deploy_to_staging.outputs.hostnames }}
   
   destroy_staging:
     uses: nodis-com-br/github-actions-workflows/.github/workflows/destroy-staging.yaml@main
@@ -71,17 +79,20 @@ jobs:
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
   
-  publish_frontend:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/publish-frontend.yaml@main
-    if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]')
-    secrets:
-      NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
-  deploy_to_production:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/deploy-frontend.yaml@main
-    needs:
-      - publish_frontend
+  approve_image:
+    uses: nodis-com-br/github-actions-workflows/.github/workflows/approve-image.yaml@main
+    if: github.event.pull_request.merged && !startsWith(github.event.pull_request.head.ref, 'release-please--')
     with:
-      version: ${{ needs.publish_frontend.outputs.version }}
-      artifact: ${{ needs.publish_frontend.outputs.artifact }}
+      approved_tag: ${{ format('pr{0}', github.event.number) }}
+  
+  promote_image:
+    uses: nodis-com-br/github-actions-workflows/.github/workflows/promote-image.yaml@main
+    if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]')
+  deploy_to_production:
+    uses: nodis-com-br/github-actions-workflows/.github/workflows/deploy-helm-releases.yaml@main
+    needs:
+      - promote_image
+    with:
+      vault_k8s_role_path: ${{ vars.vault_k8s_role_path }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}

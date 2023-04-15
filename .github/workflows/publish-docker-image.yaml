@@ -5,7 +5,8 @@ on:
     inputs:
       repository:
         description: ''
-        required: true
+        required: false
+        default: ${{ format('{0}/{1}', vars.container_registry, github.event.repository.name) }}
         type: string
       tags:
         description: ''

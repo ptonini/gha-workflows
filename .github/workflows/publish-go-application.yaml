@@ -10,36 +10,31 @@ on:
         type: string
       main_file:
         description: ''
-        default: main.go
+        default: ${{ vars.go_main_file }}
         required: false
         type: string
-      tag_name:
+      builder_image:
         description: ''
-        required: true
+        default: ${{ vars.go_builder_image }}
+        required: false
         type: string
-      release_created:
-        description: ''
-        required: true
-        type: string
-  
 jobs:
   publish_go_application:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
       - uses: actions/checkout@v3
-      - uses: ptonini/gha-load-metadata@main
+      - run: echo "VERSION=$(jq -r '."."' < ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
       - run: mkdir dist
-      - run: docker run -v $(pwd):$(pwd) -w $(pwd) ${GO_BUILDER_IMAGE} go build -o dist/${{ inputs.app_name }} ${GO_MAIN_FILE}
+      - run: docker run -v $(pwd):$(pwd) -w $(pwd) ${{ inputs.builder_image }} go build -o dist/${{ inputs.app_name }} ${{ inputs.main_file }}
       - run: sha256sum dist/${{ ${{ inputs.app_name }} }} > dist/SHA256SUMS
       - uses: actions/upload-artifact@v3
         with:
           name: application
           path: dist/**
       - uses: ptonini/gha-upload-release@main
-        if: inputs.release_created == 'true'
         with:
           file: dist/**
           file_blob: true
           repo_token: ${{ github.token }}
-          tag: ${{ inputs.tag_name }}
+          tag: v${{ env.VERSION }}

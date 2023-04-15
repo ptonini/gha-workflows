@@ -2,12 +2,6 @@ name: release-please
 
 on:
   workflow_call:
-    inputs:
-      monorepo-tags:
-        description: ''
-        required: false
-        default: false
-        type: string
     outputs:
       release_created:
         description: ''
@@ -24,7 +18,6 @@ on:
       full_output:
         description: ''
         value: ${{ jobs.release_please.outputs.full_output }}
-      
 
 jobs:
   release_please:
@@ -44,7 +37,6 @@ jobs:
         id: release
         with:
           command: manifest
-          monorepo-tags: ${{ inputs.monorepo-tags }}
       - run: echo '${{ toJson(steps.release.outputs) }}' | tee outputs
       - uses: actions/upload-artifact@v3
         with:

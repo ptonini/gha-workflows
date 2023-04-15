@@ -3,14 +3,6 @@ name: deploy-helm-releases
 on:
   workflow_call:
     inputs:
-      environment:
-        description: ''
-        required: false
-        type: string
-      namespace:
-        description: ''
-        required: false
-        type: string
       digest:
         description: ''
         required: false
@@ -18,10 +10,6 @@ on:
       vault_k8s_role_path:
         description: ''
         required: true
-        type: string
-      vault_github_token_path:
-        description: ''
-        required: false
         type: string
     secrets:
       OPENVPN_CONFIG:
@@ -54,18 +42,21 @@ jobs:
           exportToken: true
           secrets: ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG_CONTENT;
       - uses: hashicorp/vault-action@v2.4.3
-        if: inputs.vault_github_token_path
+        if: github.event_name == 'pull_request'
         with:
           url: ${{ vars.vault_addr }}
           token: ${{ env.VAULT_TOKEN }}
-          secrets: ${{ inputs.vault_github_token_path }} token | GH_TOKEN;
+          secrets: ${{ vars.vault_github_token_path }} token | GH_TOKEN;
+      - run: echo "STAGING_NAMESPACE=$(tr _ - <<< ${{ github.event.repository.name }})-${{ github.event.number }}" | tee -a ${GITHUB_ENV}
+        if: github.event_name == 'pull_request'
       - uses: ptonini/gha-prepare-helm-releases@main
         id: releases
         with:
-          digest: ${{ inputs.digest }}
-          namespace: ${{ inputs.namespace }}
-          environment: ${{ inputs.environment }}
           github_token: ${{ env.GH_TOKEN }}
+          staging_namespace: ${{ env.STAGING_NAMESPACE }}
+          digest: ${{ inputs.digest }}
+          staging_environment: ${{ vars.staging_environment }}
+          environment: ${{ vars.environment }}
           manifest_file: ${{ vars.manifest_file }}
           rp_manifest_file: ${{ vars.rp_manifest_file }}
           ingress_configs_repository: ${{ vars.ingress_configs_repository }}
@@ -79,7 +70,7 @@ jobs:
         with:
           kubeconfig_content: ${{ env.KUBECONFIG_CONTENT }}
           releases: ${{ steps.releases.outputs.releases }}
-      - uses: thollander/actions-comment-pull-request@v1
+      - uses: thollander/actions-comment-pull-request@v2
         if: steps.releases.outputs.message
         with:
           message: ${{ steps.releases.outputs.message }}

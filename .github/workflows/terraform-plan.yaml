@@ -1,0 +1,55 @@
+name: terraform-plan
+
+on:
+  workflow_call:
+    secrets:
+      OPENVPN_CONFIG:
+        description: ''
+        required: true
+    outputs:
+      exitcode:
+        description: ''
+        value: ${{ jobs.terraform_plan.outputs.exitcode }}
+
+jobs:
+  terraform_plan:
+    runs-on: ubuntu-latest
+    outputs:
+      exitcode: ${{ steps.plan.outputs.exitcode }}
+    env:
+      VAULT_ADDR: ${{ vars.vault_addr }}
+    steps:
+      - run: env | sort
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v2.0.3
+        with:
+          terraform_version: ${{ vars.terraform_version }}
+      - uses: ptonini/gha-openvpn@main
+        with:
+          openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
+          validation_addr: ${{ vars.vault_addr }}
+      - uses: hashicorp/vault-action@v2.4.3
+        with:
+          url: ${{ vars.vault_addr }}
+          method: ${{ vars.vault_method }}
+          path: ${{ vars.vault_path }}
+          role: ${{ vars.vault_role }}
+          exportToken: true
+          secrets: ${{ vars.vault_gcp_roleset_path }} token | GCS_ACCESS_TOKEN;
+      - run: terraform init -input=false -backend-config="access_token=${GCS_ACCESS_TOKEN}"
+      - run: terraform plan -out=${{ vars.terraform_plan_filename }} -no-color -input=false -detailed-exitcode
+        id: plan
+        continue-on-error: true
+      - run: echo '```${{ steps.plan.outputs.stderr }}```' >> $GITHUB_STEP_SUMMARY && exit 1
+        if: steps.plan.outputs.exitcode == '1'
+      - run: terraform show -no-color ${{ vars.terraform_plan_filename }}
+        id: show
+        if: hashFiles(vars.terraform_plan_filename)
+      - run: echo '```${{ steps.show.outputs.stdout }}```' >> $GITHUB_STEP_SUMMARY
+        if: hashFiles(vars.terraform_plan_filename)
+      - uses: actions/upload-artifact@v3
+        if: steps.plan.outputs.exitcode == '2'
+        with:
+          name: plan
+          path: ${{ vars.terraform_plan_filename }}
+          retention-days: 1

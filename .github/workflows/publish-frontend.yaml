@@ -2,34 +2,42 @@ name: publish-frontend
 
 on:
   workflow_call:
-    inputs:
-      tag_name:
-        description: ''
-        required: true
-        type: string
     secrets:
       NPM_TOKEN:
         description: ''
         required: false
+    outputs:
+      version:
+        description: ''
+        value: ${{ jobs.publish_frontend.outputs.version }}
+      artifact:
+        description: ''
+        value: ${{ jobs.publish_frontend.outputs.artifact }}
 
 jobs:
   publish_frontend:
     runs-on: ubuntu-latest
     env:
       NPM_TOKEN: ${{ github.token }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      artifact: ${{ steps.artifact.outputs.artifact }}
     steps:
       - run: env | sort
-      - uses: actions/checkout@v3
-      - uses: ptonini/gha-load-metadata@main
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: ${{ vars.nodejs_version }}
+      - uses: actions/checkout@v3
+      - run: echo "VERSION=$(jq -r '."."' < ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_OUTPUT
+        id: version
+      - run: echo "ARTIFACT=${{ github.event.repository.name }}-${{ steps.version.outputs.version }}.tgz" | tee -a $GITHUB_OUTPUT
+        id: artifact
       - run: yarn install --prod && yarn build
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: tar czvf ${ARTIFACT_FILENAME} build
+      - run: tar czvf ${{ steps.artifact.outputs.artifact }} build
       - uses: ptonini/gha-upload-release@main
         with:
-          file: ${{ env.ARTIFACT_FILENAME }}
+          file: ${{ steps.artifact.outputs.artifact }}
           repo_token: ${{ github.token }}
-          tag: ${{ inputs.tag_name }}
+          tag: v${{ steps.version.outputs.version }}

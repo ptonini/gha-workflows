@@ -1,0 +1,43 @@
+name: terraform-apply
+
+on:
+  workflow_call:
+    secrets:
+      OPENVPN_CONFIG:
+        description: ''
+        required: true
+
+jobs:
+  terraform_apply:
+    runs-on: ubuntu-latest
+    environment: terraform
+    env:
+      VAULT_ADDR: ${{ vars.vault_addr }}
+    steps:
+      - run: env | sort
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v2.0.3
+        with:
+          terraform_version: ${{ vars.terraform_version }}
+      - uses: ptonini/gha-openvpn@main
+        with:
+          openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
+          validation_addr: ${{ vars.vault_addr }}
+      - uses: hashicorp/vault-action@v2.4.3
+        with:
+          url: ${{ vars.vault_addr }}
+          method: ${{ vars.vault_method }}
+          path: ${{ vars.vault_path }}
+          role: ${{ vars.vault_role }}
+          exportToken: true
+          secrets: ${{ vars.vault_gcp_roleset_path }} token | GCS_ACCESS_TOKEN;
+      - run: terraform init -input=false -backend-config="access_token=${GCS_ACCESS_TOKEN}"
+      - uses: actions/download-artifact@v3
+        with:
+          name: plan
+      - run: terraform apply ${{ vars.terraform_plan_filename }}
+        env:
+          VAULT_ADDR: ${{ vars.vault_addr }}
+      - uses: geekyeggo/delete-artifact@v2
+        with:
+          name: plan

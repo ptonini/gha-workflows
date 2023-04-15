@@ -1,0 +1,25 @@
+name: apply
+
+on:
+  workflow_dispatch: ~
+  push:
+    branches:
+      - master
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  plan:
+    uses: nodis-com-br/github-actions-workflows/.github/workflows/terraform-plan.yaml@main
+    secrets:
+      openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
+  apply:
+    uses: nodis-com-br/github-actions-workflows/.github/workflows/terraform-apply.yaml@main
+    if: needs.plan.outputs.exitcode == '2'
+    needs:
+      - plan
+    secrets:
+      openvpn_config: ${{ secrets.OPENVPN_CONFIG }}

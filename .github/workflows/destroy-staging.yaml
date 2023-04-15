@@ -3,10 +3,6 @@ name: destroy-staging
 on:
   workflow_call:
     inputs:
-      namespace:
-        description: ''
-        required: true
-        type: string
       vault_k8s_role_path:
         description: ''
         required: true
@@ -35,10 +31,8 @@ jobs:
           role: ${{ vars.vault_role }}
           url: ${{ vars.vault_addr }}
           secrets: ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG_CONTENT;
-      - run: echo "NAMESPACE=${NS//_/-}" | tee -a ${GITHUB_ENV}
-        env:
-          NS: ${{ inputs.namespace }}
       - run: echo "${KUBECONFIG_CONTENT}" > kubeconfig && chmod 0600 kubeconfig && echo "KUBECONFIG=kubeconfig" | tee -a ${GITHUB_ENV}
-      - run: helm --namespace ${NAMESPACE} list --short | xargs -r helm uninstall --namespace ${NAMESPACE}
-      - run: kubectl delete all --all --namespace ${NAMESPACE}
-      - run: kubectl get namespace ${NAMESPACE} && kubectl delete namespace ${NAMESPACE}
+      - run: echo "STAGING_NAMESPACE=$(tr _ - <<< ${{ github.event.repository.name }})-${{ github.event.number }}" | tee -a ${GITHUB_ENV}
+      - run: helm --namespace ${STAGING_NAMESPACE} list --short | xargs -r helm uninstall --namespace ${STAGING_NAMESPACE}
+      - run: kubectl delete all --all --namespace ${STAGING_NAMESPACE}
+      - run: kubectl get namespace ${STAGING_NAMESPACE} && kubectl delete namespace ${STAGING_NAMESPACE}

@@ -3,45 +3,34 @@ name: publish-lua-rock
 on:
   workflow_call:
     inputs:
-      tag_name:
+      path:
         description: ''
         required: true
         type: string
-      release_created:
-        description: ''
-        required: true
-        type: string
-      release_version:
-        description: ''
-        required: true
-        type: string
-      
-        
+
 jobs:
-  publish_lua_rock:
+  publish_lua_rocks:
     runs-on: ubuntu-latest
-    env:
-      ROCK_FILE: ${{ format('{0}-{1}-0.rockspeck', github.event.repository.name, inputs.release_version) }}
-      ROCK_FILE_PATTERN: ${{ format('{0}-{1}-0.*', github.event.repository.name, inputs.release_version) }}
     steps:
-      - run: env | sort
       - uses: actions/checkout@v3
-      - uses: ptonini/gha-load-metadata@main
       - uses: leafo/gh-actions-lua@v9
       - uses: leafo/gh-actions-luarocks@v4
-      - run: cat template.rockspec | envsubst > ${ROCK_FILE}
-        env:
-          PACKAGE_NAME: ${{ github.event.repository.name }}
-          RELEASE_VERSION: ${{ inputs.release_version }}
-      - run: luarocks pack ${ROCK_FILE}
+      - uses: actions/download-artifact@v3
+        with:
+          name: release-please-outputs
+      - run: echo "PACKAGE=$(echo "${{ inputs.path }}" | awk -F/ '{ print $2 }' )" | tee -a $GITHUB_ENV
+      - run: echo "VERSION=$(jq -r --arg A "${{ inputs.path }}--version" '.[$A]' outputs)" | tee -a $GITHUB_ENV
+      - run: echo "TAG_NAME=$(jq -r --arg A "${{ inputs.path }}--tag_name" '.[$A]' outputs)" | tee -a $GITHUB_ENV
+      - run: tar -czvC rocks -f ${{ inputs.path }}.tar.gz ${PACKAGE}
+      - run: envsubst < ${{ inputs.path }}/rockspec > ${PACKAGE}-${VERSION}-1.rockspec
+      - run: luarocks pack ${{ env.PACKAGE }}-${{ env.VERSION }}-1.rockspec
       - uses: actions/upload-artifact@v3
         with:
-          name: luarock
-          path: ${{ env.ROCK_FILE_PATTERN }}
+          name: rocks
+          path: ${{ env.PACKAGE }}-${{ env.VERSION }}*
       - uses: ptonini/gha-upload-release@main
-        if: inputs.release_created == 'true'
         with:
-          file: ${{ env.ROCK_FILE_PATTERN }}
+          file: ${{ env.PACKAGE }}-${{ env.VERSION }}*
           file_glob: true
           repo_token: ${{ github.token }}
-          tag: ${{ inputs.tag_name }}
+          tag: ${{ env.TAG_NAME }}

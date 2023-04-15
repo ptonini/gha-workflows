@@ -3,26 +3,22 @@ name: publish-python-package
 on:
   workflow_call:
     inputs:
-      tag_name:
+      pypi_addr:
         description: ''
         required: true
+        default: ${{ vars.pypi_addr }}
         type: string
-      release_created:
-        description: ''
-        required: true
-        type: string
-    secrets:
-      PYPI_ADDR:
-        description: ''
-        required: true
         
 jobs:
   publish_python_package:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ vars.python_version }}
       - uses: actions/checkout@v3
-      - uses: ptonini/gha-load-metadata@main
+      - run: echo "VERSION=$(jq -r '."."' < ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
       - run: pip3 install twine
       - run: python3 setup.py sdist
       - uses: actions/upload-artifact@v3
@@ -30,11 +26,9 @@ jobs:
           name: package
           path: dist/**
       - uses: ptonini/gha-upload-release@main
-        if: inputs.release_created == 'true'
         with:
           file: dist/**
           file_glob: true
           repo_token: ${{ github.token }}
-          tag: ${{ inputs.tag_name }}
-      - run: python3 -m twine upload dist/* --verbose --repository-url ${{ secrets.PYPI_ADDR }} --username ${{ github.event.repository.name }} --password ${{ github.token }}
-        if: inputs.release_created == 'true'
+          tag: v${{ env.VERSION }}
+      - run: python3 -m twine upload dist/* --verbose --repository-url ${{ inputs.pypi_addr }} --username ${{ github.event.repository.name }} --password ${{ github.token }}

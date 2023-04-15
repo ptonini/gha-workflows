@@ -3,30 +3,16 @@ name: deploy-frontend
 on:
   workflow_call:
     inputs:
-      tag_name:
+      version:
         description: ''
         required: true
         type: string
-      vault_method:
+      artifact:
         description: ''
-        default: jwt
-        required: false
-        type: string
-      vault_path:
-        description: ''
-        default: oidc/github
-        required: false
-        type: string
-      vault_role:
-        description: ''
-        default: workflow
-        required: false
+        required: true
         type: string
     secrets:
       OPENVPN_CONFIG:
-        description: ''
-        required: true
-      VAULT_ADDR:
         description: ''
         required: true
 
@@ -39,30 +25,29 @@ jobs:
     steps:
       - run: env | sort
       - uses: actions/checkout@v3
-      - uses: ptonini/gha-load-metadata@master
       - uses: ptonini/gha-openvpn@master
         with:
-          openvpn_config: ${{ secrets.openvpn_config }}
+          openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
       - uses: hashicorp/vault-action@v2.4.3
         with:
-          method: ${{ inputs.vault_method }}
-          path: ${{ inputs.vault_path }}
-          role: ${{ inputs.vault_role }}
-          url: ${{ secrets.VAULT_ADDR }}
+          url: ${{ vars.vault_addr }}
+          method: ${{ vars.vault_method }}
+          path: ${{ vars.vault_path }}
+          role: ${{ vars.vault_role }}
           secrets: |
-            ${{ env.VAULT_AWS_ROLE_PATH }} access_key | AWS_ACCESS_KEY_ID;
-            ${{ env.VAULT_AWS_ROLE_PATH }} secret_key | AWS_SECRET_ACCESS_KEY;
-            ${{ env.VAULT_AWS_ROLE_PATH }} security_token | AWS_SESSION_TOKEN;
+            ${{ vars.vault_aws_role_path }} access_key | AWS_ACCESS_KEY_ID;
+            ${{ vars.vault_aws_role_path }} secret_key | AWS_SECRET_ACCESS_KEY;
+            ${{ vars.vault_aws_role_path }} security_token | AWS_SESSION_TOKEN;
       - uses: dsaltares/fetch-gh-release-asset@master
         with:
-          version: tags/${{ inputs.tag_name }}
-          file: ${{ env.ARTIFACT_FILENAME }}
-          target: ./${{ env.ARTIFACT_FILENAME }}
-      - run: tar xzvf ${ARTIFACT_FILENAME}
-      - run: aws s3 sync --delete --acl public-read build "s3://${BUCKET}/www"
+          version: tags/v${{ inputs.version }}
+          file: ${{ inputs.artifact }}
+          target: ./${{ inputs.artifact }}
+      - run: tar xzvf ${{ inputs.artifact }}
+      - run: aws s3 sync --delete --acl public-read build "s3://${{ vars.cloudfront_bucket }}/www"
       - run: |
-          for I in $(jq -c '.[]' <<< "${CUSTOM_TYPES}"); do
+          for I in $(jq -c '.[]' <<< "${{ vars.custom_types }}"); do
             OBJECT=$(jq -r '.object' <<< "${I}")
-            aws s3api put-object --bucket ${BUCKET} --key www/${OBJECT} --body build/${OBJECT} --content-type $(jq -r '."content-type"' <<< "${I}") --acl public-read
+            aws s3api put-object --bucket ${{ vars.cloudfront_bucket }} --key www/${OBJECT} --body build/${OBJECT} --content-type $(jq -r '."content-type"' <<< "${I}") --acl public-read
           done
-      - run: aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "/*"
+      - run: aws cloudfront create-invalidation --distribution-id ${{ vars.cloudfront_distribution }} --paths "/*"
