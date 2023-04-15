@@ -5,7 +5,8 @@ on:
     branches:
       - main
     paths-ignore:
-      - .github/workflows/_sync-repositories.yml
+      - .github/workflows/_*
+      - modules/*
 
 jobs:
   detect_changes:
@@ -14,9 +15,10 @@ jobs:
       filters: |
         workflows:
           - '.github/workflows/*'
-          - '!.github/workflows/_sync-repositories.yml'
         src:
           - 'src/*'
+        modules:
+          - 'modules/*'
   sync_folders:
     runs-on: ubuntu-latest
     if: needs.detect_changes.outputs.changes != '[]'
@@ -27,22 +29,22 @@ jobs:
         repository: ${{ fromJson(vars.child_repositories) }}
     steps:
       - run: env | sort
-      - run: echo ${{ needs.detect_changes.outputs.changes }}
       - uses: ptonini/gha-config-git-user@main
       - uses: actions/checkout@v3
       - uses: actions/checkout@v3
         with:
           repository: ${{ matrix.repository }}
           ssh-key: ${{ secrets.CHILD_REPOSITORY_DEPLOY_KEY_0 }}
-          branch: main
           path: child_repository
-      - run: sed -i 's/${GITHUB_REPOSITORY}/${{ matrix.repository }}/g' src/*
+      - run: sudo apt-get install -y rpl && rpl "${{ github.repository }}" "${{ matrix.repository }}" src/*
         if: contains(fromJson(needs.detect_changes.outputs.changes), 'src')
-      - run: rsync -vr .src child_repository
+      - run: rsync -vr src child_repository
         if: contains(fromJson(needs.detect_changes.outputs.changes), 'src')
+      - run: rsync -vr modules child_repository
+        if: contains(fromJson(needs.detect_changes.outputs.changes), 'modules')
       - run: rsync -vr --exclude '_*' .github/workflows child_repository/.github
         if: contains(fromJson(needs.detect_changes.outputs.changes), 'workflows')
       - uses: EndBug/add-and-commit@v9
         with:
           cwd: ./child_repository
-          message: "chore: synchronized from ${{ github.event.repository.full_name }}"
+          message: "chore: synchronized from ${{ github.repository }}"

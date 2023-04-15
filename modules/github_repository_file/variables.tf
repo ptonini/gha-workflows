@@ -8,10 +8,6 @@ variable "language" {
   default = null
 }
 
-variable "repository" {
-  default = null
-}
-
 variable "file" {}
 
 variable "content" {}
