@@ -8,7 +8,7 @@ on:
       - .github/workflows/*
       - '!.github/workflows/_*'
       - src/*
-      - modules/*
+      - modules/**
 
 jobs:
   detect_changes:
