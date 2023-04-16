@@ -25,4 +25,4 @@ jobs:
   update_repository:
     uses: ptonini/gha-workflows/.github/workflows/update-charts-repository.yaml@main
     needs:
-      - publish_rocks
+      - publish_charts

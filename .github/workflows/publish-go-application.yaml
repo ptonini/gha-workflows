@@ -27,10 +27,8 @@ jobs:
       - run: echo "VERSION=$(jq -r '."."' < ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
       - run: mkdir dist
       - run: docker run -v $(pwd):$(pwd) -w $(pwd) ${{ inputs.builder_image }} go build -o dist/${{ inputs.app_name }} ${{ inputs.main_file }}
-      - run: sha256sum dist/${{ ${{ inputs.app_name }} }} > dist/SHA256SUMS
+      - run: sha256sum dist/${{ inputs.app_name }} > dist/SHA256SUMS
       - uses: ptonini/gha-upload-release@main
         with:
-          file: dist/**
-          file_blob: true
-          repo_token: ${{ github.token }}
+          file: dist/${{ inputs.app_name }}
           tag: v${{ env.VERSION }}

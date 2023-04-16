@@ -11,12 +11,13 @@ jobs:
         with:
           ref: gh-pages
       - uses: leafo/gh-actions-lua@v9
+        with:
+          luaVersion: ${{ vars.lua_version }}
       - uses: leafo/gh-actions-luarocks@v4
       - uses: actions/download-artifact@v3
         with:
           name: rocks
       - run: luarocks-admin make-manifest --local-tree ${{ github.workspace }}
-      - run: cat manifest
       - uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: .

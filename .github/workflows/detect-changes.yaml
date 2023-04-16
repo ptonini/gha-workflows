@@ -21,8 +21,8 @@ jobs:
     steps:
       - run: env | sort
       - uses: actions/checkout@v3
-      - run: '[[ -e ./filters.yaml ]] || bash build_filters > filters.yaml'
-        if: ${{ inputs.filters }} == "filters.yaml"
+      - run: test -e ./filters.yaml || bash build_filters > filters.yaml
+        if: inputs.filters == 'filters.yaml'
       - uses: dorny/paths-filter@v2
         id: filter
         with:
