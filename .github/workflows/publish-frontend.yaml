@@ -19,25 +19,23 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NPM_TOKEN: ${{ github.token }}
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      artifact: ${{ steps.artifact.outputs.artifact }}
     steps:
       - run: env | sort
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ vars.nodejs_version }}
       - uses: actions/checkout@v3
-      - run: echo "VERSION=$(jq -r '."."' < ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_OUTPUT
-        id: version
-      - run: echo "ARTIFACT=${{ github.event.repository.name }}-${{ steps.version.outputs.version }}.tgz" | tee -a $GITHUB_OUTPUT
-        id: artifact
+      - run: echo "VERSION=$(jq -r '."."' < ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
+      - run: echo "ARTIFACT=${{ github.event.repository.name }}-${{ steps.version.outputs.version }}.tgz" | tee -a $GITHUB_ENV
       - run: yarn install --prod && yarn build
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: tar czvf ${{ steps.artifact.outputs.artifact }} build
+      - run: tar czvf ${ARTIFACT} build
       - uses: ptonini/gha-upload-release@main
         with:
-          file: ${{ steps.artifact.outputs.artifact }}
+          file: ${{ env.ARTIFACT }}
           repo_token: ${{ github.token }}
-          tag: v${{ steps.version.outputs.version }}
+          tag: v${{ env.VERSION }}
+    outputs:
+      version: ${{ env.VERSION }}
+      artifact: ${{ env.ARTIFACT }}
