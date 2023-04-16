@@ -1,0 +1,28 @@
+name: publish
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - charts/**
+
+jobs:
+  release_please:
+    uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
+    if: github.event_name == 'push'
+  publish_charts:
+    uses: ptonini/gha-workflows/.github/workflows/publish-helm-charts.yaml@main
+    if: needs.release_please.outputs.paths_released != '[]'
+    needs:
+      - release_please
+    strategy:
+      matrix:
+        path: ${{ fromJSON(needs.release_please.outputs.paths_released) }}
+    with:
+      path: ${{ matrix.path }}
+      packages: ${{ fromJson(needs.release_please.outputs.packages) }}
+  update_repository:
+    uses: ptonini/gha-workflows/.github/workflows/update-charts-repository.yaml@main
+    needs:
+      - publish_rocks
