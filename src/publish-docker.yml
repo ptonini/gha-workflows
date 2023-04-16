@@ -47,7 +47,7 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/approve-image.yaml@main
     if: github.event.pull_request.merged
     with:
-      approved_tag: ${{ format('pr{0}', github.event.pull_request.number) }}
+      approved_tag: ${{ format('pr{0}', github.event.number) }}
   
   promote_image:
     uses: ptonini/gha-workflows/.github/workflows/promote-image.yaml@main
