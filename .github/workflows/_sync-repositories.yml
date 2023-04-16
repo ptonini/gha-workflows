@@ -13,7 +13,6 @@ jobs:
     with:
       filters: |
         workflows:
-          - '!.github/workflows/_*'
           - '.github/workflows/*'
         src:
           - 'src/*'
@@ -38,12 +37,7 @@ jobs:
           path: child_repository
       - run: sudo apt-get install -y rpl && rpl "${{ github.repository }}" "${{ matrix.repository }}" src/*
         if: contains(fromJson(needs.detect_changes.outputs.changes), 'src')
-      - run: rsync -vr src child_repository
-        if: contains(fromJson(needs.detect_changes.outputs.changes), 'src')
-      - run: rsync -vr modules child_repository
-        if: contains(fromJson(needs.detect_changes.outputs.changes), 'modules')
-      - run: rsync -vr --exclude '_*' .github/workflows child_repository/.github
-        if: contains(fromJson(needs.detect_changes.outputs.changes), 'workflows')
+      - run: rsync -vr --exclude '.github/workflows/_*' --exclude 'child_repository' . child_repository
       - uses: EndBug/add-and-commit@v9
         with:
           cwd: ./child_repository
