@@ -13,11 +13,12 @@ jobs:
     with:
       filters: |
         workflows:
+          - '!.github/workflows/_*'
           - '.github/workflows/*'
         src:
           - 'src/*'
         modules:
-          - 'modules/*'
+          - 'modules/**'
   sync_folders:
     runs-on: ubuntu-latest
     if: needs.detect_changes.outputs.changes != '[]'
