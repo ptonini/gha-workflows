@@ -8,7 +8,6 @@ provider "github" {
   owner = local.owner
 }
 
-
 module "workflow_publish_helm_monorepo" {
   source  = "modules/github_repository_file"
   topics  = ["helm-charts github-flow"]
