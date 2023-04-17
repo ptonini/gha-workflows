@@ -20,16 +20,16 @@ on:
 jobs:
   detect_changes:
     runs-on: ubuntu-latest
-    outputs:
-      changes: ${{ steps.filter.outputs.changes }}
     steps:
       - run: env | sort
       - uses: actions/checkout@v3
-      - run: jq -r '.packages | keys | reduce .[] as $i ({}; .[$i] = $i+"/*")' release-please-config.json > ${{ inputs.filters }}
-        if: hashFiles('release-please-config.json')
+      - run: jq -r 'keys | reduce .[] as $i ({}; .[$i] = $i+"/**")' ${{ vars.rp_manifest_file }} > ${{ inputs.filters }}
+        if: hashFiles(vars.rp_manifest_file)
       - run: ${{ inputs.filters_cmd }} > ${{ inputs.filters }}
         if: inputs.filters_cmd
       - uses: dorny/paths-filter@v2
         id: filter
         with:
           filters: ${{ inputs.filters }}
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}

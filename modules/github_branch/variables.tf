@@ -1,3 +1,5 @@
+variable "branch" {}
+
 variable "owner" {}
 
 variable "topics" {
@@ -11,7 +13,3 @@ variable "language" {
 variable "extra_query_params" {
   default = ""
 }
-
-variable "name" {}
-
-variable "value" {}

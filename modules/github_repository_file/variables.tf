@@ -27,3 +27,11 @@ variable "commit_email" {
 variable "overwrite_on_create" {
   default = true
 }
+
+variable "extra_query_params" {
+  default = ""
+}
+
+variable "branch" {
+  default = ""
+}

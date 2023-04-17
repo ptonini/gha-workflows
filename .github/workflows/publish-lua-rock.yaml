@@ -7,10 +7,6 @@ on:
         description: ''
         required: true
         type: string
-      packages:
-        description: ''
-        required: true
-        type: string
 
 jobs:
   publish_lua_rocks:
@@ -21,15 +17,15 @@ jobs:
         with:
           luaVersion: ${{ vars.lua_version }}
       - uses: leafo/gh-actions-luarocks@v4
-      - run: echo "PACKAGE=$(jq -r '."${{ inputs.path }}".package_name' <<< '${{ inputs.packages }}')" | tee -a $GITHUB_ENV
-      - run: echo "TAG_NAME=$(jq -r  '."${{ inputs.path }}".tag_name' <<< '${{ inputs.packages }}')" | tee -a $GITHUB_ENV
-      - run: echo "VERSION=$(jq -r  '."${{ inputs.path }}".version' <<< '${{ inputs.packages }}')" | tee -a $GITHUB_ENV
-      - run: tar -czvC rocks -f ${{ inputs.path }}.tar.gz ${PACKAGE}
-      - run: envsubst < ${{ inputs.path }}/rockspec > ${PACKAGE}-${VERSION}-1.rockspec
-      - run: luarocks pack ${PACKAGE}-${VERSION}-1.rockspec
+      - run: echo "ROCK=$(basename ${{ inputs.path }})" | tee -a $GITHUB_ENV
+      - run: echo "VERSION=$(jq -r '."${{ inputs.path }}"' ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
+      - run: tar -czvC rocks -f ${{ inputs.path }}.tar.gz ${ROCK}
+      - run: envsubst < ${{ inputs.path }}/rockspec > ${ROCK}-${VERSION}-1.rockspec
+      - run: luarocks pack ${ROCK}-${VERSION}-1.rockspec
       - uses: ptonini/gha-upload-release@main
         with:
-          file: ${{ env.PACKAGE }}-${{ env.VERSION }}-*
+          file: ${{ env.ROCK }}-${{ env.VERSION }}-*
           file_glob: true
-          repo_token: ${{ github.token }}
-          tag: ${{ env.TAG_NAME }}
+          tag: ${{ env.ROCK }}-v${{ env.VERSION }}
+          release_name: "${{ env.CHART }}: v${{ env.VERSION }}"
+          overwrite: true

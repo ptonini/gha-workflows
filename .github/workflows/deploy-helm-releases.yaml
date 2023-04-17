@@ -52,16 +52,16 @@ jobs:
       - uses: ptonini/gha-prepare-helm-releases@main
         id: releases
         with:
-          github_token: ${{ env.GH_TOKEN }}
-          staging_namespace: ${{ env.STAGING_NAMESPACE }}
           digest: ${{ inputs.digest }}
-          staging_environment: ${{ vars.staging_environment }}
           environment: ${{ vars.environment }}
+          staging_environment: ${{ vars.staging_environment }}
+          staging_namespace: ${{ env.STAGING_NAMESPACE }}
           manifest_file: ${{ vars.manifest_file }}
           rp_manifest_file: ${{ vars.rp_manifest_file }}
           ingress_configs_repository: ${{ vars.ingress_configs_repository }}
           org_domain: ${{ vars.org_domain }}
-          app_groups: ${{ vars.app_groups }}
+          github_token: ${{ env.GH_TOKEN }}
+      - run: echo "RELEASES=$(ls -d */ | tr "\n" " " | tr -d / )" | tee -a $GITHUB_ENV
       - uses: actions/upload-artifact@v3
         with:
           name: releases
@@ -69,7 +69,7 @@ jobs:
       - uses: ptonini/gha-deploy-helm-releases@main
         with:
           kubeconfig_content: ${{ env.KUBECONFIG_CONTENT }}
-          releases: ${{ steps.releases.outputs.releases }}
+          releases: ${{ env.RELEASES }}
       - uses: thollander/actions-comment-pull-request@v2
         if: steps.releases.outputs.message
         with:

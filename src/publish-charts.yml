@@ -10,18 +10,21 @@ on:
 jobs:
   release_please:
     uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && !contains(github.event.commits.*.author.name, 'github-actions[bot]')
+
+  detect_changes:
+    uses: ptonini/gha-workflows/.github/workflows/detect-changes.yaml@main
+
   publish_charts:
     uses: ptonini/gha-workflows/.github/workflows/publish-helm-charts.yaml@main
-    if: needs.release_please.outputs.paths_released != '[]'
+    if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]') && needs.detect_changes.outputs.changes != '[]'
     needs:
-      - release_please
+      - detect_changes
     strategy:
       matrix:
-        path: ${{ fromJSON(needs.release_please.outputs.paths_released) }}
+        path: ${{ fromJSON(needs.detect_changes.outputs.changes) }}
     with:
       path: ${{ matrix.path }}
-      packages: ${{ fromJson(needs.release_please.outputs.packages) }}
   update_repository:
     uses: ptonini/gha-workflows/.github/workflows/update-charts-repository.yaml@main
     needs:

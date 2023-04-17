@@ -1,8 +1,8 @@
 locals {
   default_email   = "${var.commit_author}@users.noreply.github.com"
   default_message = "chore: ${var.file} created/modified by terraform [skip ci]"
-  query_00        = "org:${var.owner} archived:false"
-  query           = var.language == null ? local.query_00 : "${local.query_00} language:${var.language}"
+  base_query      = "org:${var.owner} archived:false ${var.extra_query_params}"
+  query           = var.language == null ? local.base_query : "${local.base_query} language:${var.language}"
 }
 
 data "github_repositories" "this" {
@@ -18,7 +18,7 @@ data "github_repository" "this" {
 resource "github_repository_file" "this" {
   for_each            = data.github_repository.this
   repository          = each.key
-  branch              = each.value["default_branch"]
+  branch              = coalesce(var.branch, each.value["default_branch"])
   file                = var.file
   content             = var.content
   commit_author       = var.commit_author

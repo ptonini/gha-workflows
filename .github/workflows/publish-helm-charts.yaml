@@ -7,21 +7,22 @@ on:
         description: ''
         required: true
         type: string
-      packages:
-        description: ''
-        required: true
-        type: string
 
 jobs:
   publish_charts:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: echo "PACKAGE=$(jq -r '."${{ inputs.path }}".package_name' <<< '${{ inputs.packages }}')" | tee -a $GITHUB_ENV
-      - run: echo "TAG_NAME=$(jq -r  '."${{ inputs.path }}".tag_name' <<< '${{ inputs.packages }}')" | tee -a $GITHUB_ENV
-      - run: echo "VERSION=$(jq -r  '."${{ inputs.path }}".version' <<< '${{ inputs.packages }}')" | tee -a $GITHUB_ENV
-      - run: helm package --dependency-update ${{ matrix.path }}
+      - run: echo "CHART=$(basename ${{ inputs.path }})" | tee -a $GITHUB_ENV
+      - run: echo "VERSION=$(jq -r '."${{ inputs.path }}"' ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
+      - run: helm package --dependency-update ${{ inputs.path }}
       - uses: ptonini/gha-upload-release@main
         with:
-          file: ${{ env.PACKAGE }}-${{ env.VERSION }}.tgz
-          tag: ${{ env.TAG_NAME }}
+          file: ${{ env.CHART }}-${{ env.VERSION }}.tgz
+          tag: ${{ env.CHART }}-v${{ env.VERSION }}
+          release_name: "${{ env.CHART }}: v${{ env.VERSION }}"
+          overwrite: true
+      - uses: actions/upload-artifact@v3
+        with:
+          path: ${{ env.CHART }}-${{ env.VERSION }}.tgz
+          name: builds

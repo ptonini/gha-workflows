@@ -26,10 +26,11 @@ jobs:
           node-version: ${{ vars.nodejs_version }}
       - uses: actions/checkout@v3
       - run: echo "VERSION=$(jq -r '."."' < ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
-      - run: echo "ARTIFACT=${{ github.event.repository.name }}-${{ steps.version.outputs.version }}.tgz" | tee -a $GITHUB_ENV
+      - run: echo "ARTIFACT=${{ github.event.repository.name }}-${VERSION}.tgz" | tee -a $GITHUB_ENV
       - run: yarn install --prod && yarn build
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODIS_DEPLOY_ENVIRONMENT: ${{ vars.environment }}
       - run: tar czvf ${ARTIFACT} build
       - uses: ptonini/gha-upload-release@main
         with:

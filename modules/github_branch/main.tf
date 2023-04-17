@@ -5,7 +5,7 @@ locals {
 
 data "github_repositories" "this" {
   for_each = toset(var.topics)
-  query    = "${each.value} in:topics ${local.base_query}"
+  query    = "${each.value} in:topics ${local.query}"
 }
 
 data "github_repository" "this" {
@@ -13,9 +13,9 @@ data "github_repository" "this" {
   name     = each.value
 }
 
-resource "github_actions_variable" "this" {
+resource "github_branch" "this" {
   for_each      = data.github_repository.this
   repository    = each.key
-  variable_name = var.name
-  value         = var.value
+  branch        = var.branch
+  source_branch = each.value["default_branch"]
 }

@@ -9,9 +9,6 @@ on:
       paths_released:
         description: ''
         value: ${{ jobs.release_please.outputs.paths_released }}
-      packages:
-        description: ''
-        value: ${{ jobs.release_please.outputs.packages }}
 
 
 jobs:
@@ -20,18 +17,10 @@ jobs:
     outputs:
       releases_created: ${{ steps.release_please.outputs.releases_created }}
       paths_released: ${{ steps.release_please.outputs.paths_released }}
-      packages: ${{ toJson(steps.output_parser.outputs.packages) }}
     steps:
       - run: env | sort
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - uses: google-github-actions/release-please-action@v3
         id: release_please
         with:
           command: manifest
       - run: echo '${{ toJson(steps.release_please.outputs) }}'
-      - uses: ptonini/gha-release-please-output-parser@main
-        id: output_parser
-        with:
-          release_please_outputs: ${{ toJson(steps.release_please.outputs) }}
