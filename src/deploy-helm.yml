@@ -51,7 +51,7 @@ jobs:
       tags: ${{ format('latest pr{0} pr{0}-{1}', github.event.number, github.run_number) }}
     secrets:
       BUILD_ARGUMENTS: |
-        BUILD_USERNAME=${{ github.actor }}
+        BUILD_USERNAME=${{ vars.gh_packages_user }}
         BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
   deploy_to_staging:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
