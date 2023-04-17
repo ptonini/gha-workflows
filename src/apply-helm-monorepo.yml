@@ -16,6 +16,8 @@ permissions:
 jobs:
   detect_changes:
     uses: ptonini/gha-workflows/.github/workflows/detect-changes.yaml@main
+    with:
+      filters_cmd: 'find . -mindepth 3 -maxdepth 3 -type d -not -path "*/.*" -exec bash -c "R=\"{}\"; echo \"\${R#./}: \${R#./}/*\"" \;'
   apply_releases:
     runs-on: ubuntu-latest
     if: needs.detect_changes.outputs.changes != '[]'

@@ -38,9 +38,10 @@ jobs:
           repository: ${{ matrix.repository }}
           ssh-key: ${{ secrets.SSH_KEY }}
           path: child_repository
-      - run: sudo apt-get install -y rpl && rpl "${{ github.repository }}" "${{ matrix.repository }}" src/*
-        if: contains(fromJson(needs.detect_changes.outputs.changes), 'src')
-      - run: rsync -vr src child_repository
+      - run: | 
+          sudo apt-get install -y rpl
+          rpl "${{ github.repository }}" "${{ matrix.repository }}" src/*
+          rsync -vr src child_repository
         if: contains(fromJson(needs.detect_changes.outputs.changes), 'src')
       - run: rsync -vr modules child_repository
         if: contains(fromJson(needs.detect_changes.outputs.changes), 'modules')

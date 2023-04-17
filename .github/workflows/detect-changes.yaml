@@ -8,6 +8,10 @@ on:
         default: filters.yaml
         required: false
         type: string
+      filters_cmd:
+        description: ''
+        required: false
+        type: string
     outputs:
       changes:
         description: ''
@@ -21,8 +25,10 @@ jobs:
     steps:
       - run: env | sort
       - uses: actions/checkout@v3
-      - run: test -e ./filters.yaml || bash build_filters > filters.yaml
-        if: inputs.filters == 'filters.yaml'
+      - run: jq -r '.packages | keys | reduce .[] as $i ({}; .[$i] = $i+"/*")' release-please-config.json > ${{ inputs.filters }}
+        if: hashFiles('release-please-config.json')
+      - run: ${{ inputs.filters_cmd }} > ${{ inputs.filters }}
+        if: inputs.filters_cmd
       - uses: dorny/paths-filter@v2
         id: filter
         with:

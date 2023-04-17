@@ -1,5 +1,8 @@
 name: apply
 
+concurrency:
+  group: ${{ github.repository }}
+
 on:
   workflow_dispatch: ~
   push:

@@ -1,0 +1,29 @@
+name: publish-docker-monorepo-image
+
+on:
+  workflow_call:
+    inputs:
+      path:
+        description: ''
+        required: true
+        type: string
+      packages:
+        description: ''
+        required: true
+        type: string
+
+jobs:
+  publish_docker_monorepo_image:
+    runs-on: ubuntu-latest
+    steps:
+      - run: env | sort
+      - uses: actions/checkout@v3
+      - run: echo "VERSION=$(jq -r '."${{ inputs.path }}".version' <<< '${{ inputs.packages }}')" | tee -a $GITHUB_ENV
+      - uses: ptonini/gha-publish-docker-image@main
+        with:
+          registry: ${{ vars.container_registry }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+          repository: ${{ vars.repository_prefix }}/${{ matrix.path }}
+          tags: latest ${{ env.VERSION }}
+          path: ${{ github.workspace }}/${{ matrix.path }}
