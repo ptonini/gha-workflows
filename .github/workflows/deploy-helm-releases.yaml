@@ -3,6 +3,10 @@ name: deploy-helm-releases
 on:
   workflow_call:
     inputs:
+      macros:
+        description: ''
+        required: true
+        type: string
       digest:
         description: ''
         required: false
@@ -16,19 +20,18 @@ on:
         description: ''
         required: true
     outputs:
-      hostnames:
+      staging_host:
         description: ''
-        value: ${{ jobs.deploy_helm_releases.outputs.hostnames }}
+        value: ${{ jobs.deploy_helm_releases.outputs.staging_host }}
 
 jobs:
   deploy_helm_releases:
     runs-on: ubuntu-latest
-    outputs:
-      hostnames: ${{ steps.releases.outputs.hostnames }}
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
       - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
       - uses: ptonini/gha-openvpn@main
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
@@ -40,38 +43,30 @@ jobs:
           path: ${{ vars.vault_path }}
           role: ${{ vars.vault_role }}
           exportToken: true
-          secrets: ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG_CONTENT;
+          secrets: ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG_MANIFEST;
       - uses: hashicorp/vault-action@v2.4.3
         if: github.event_name == 'pull_request'
         with:
           url: ${{ vars.vault_addr }}
           token: ${{ env.VAULT_TOKEN }}
           secrets: ${{ vars.vault_github_token_path }} token | GH_TOKEN;
-      - run: echo "STAGING_NAMESPACE=$(tr _ - <<< ${{ github.event.repository.name }})-${{ github.event.number }}" | tee -a ${GITHUB_ENV}
-        if: github.event_name == 'pull_request'
-      - uses: ptonini/gha-prepare-helm-releases@main
+      - uses: ptonini/gha-create-helm-releases@main
         id: releases
         with:
+          macros: ${{ inputs.macros }}
           digest: ${{ inputs.digest }}
-          environment: ${{ vars.environment }}
-          staging_environment: ${{ vars.staging_environment }}
-          staging_namespace: ${{ env.STAGING_NAMESPACE }}
+          container_registry: ${{ vars.container_registry }}
           manifest_file: ${{ vars.manifest_file }}
           rp_manifest_file: ${{ vars.rp_manifest_file }}
-          ingress_configs_repository: ${{ vars.ingress_configs_repository }}
-          org_domain: ${{ vars.org_domain }}
+          staging_domain: ${{ vars.staging_domain }}
           github_token: ${{ env.GH_TOKEN }}
-      - run: echo "RELEASES=$(ls -d */ | tr "\n" " " | tr -d / )" | tee -a $GITHUB_ENV
-      - uses: actions/upload-artifact@v3
-        with:
-          name: releases
-          path: ${{ github.workspace }}/**
       - uses: ptonini/gha-deploy-helm-releases@main
         with:
-          kubeconfig_content: ${{ env.KUBECONFIG_CONTENT }}
-          releases: ${{ env.RELEASES }}
+          kubeconfig_content: ${{ env.KUBECONFIG_MANIFEST }}
+          releases: ${{ steps.releases.outputs.releases }}
       - uses: thollander/actions-comment-pull-request@v2
-        if: steps.releases.outputs.message
+        if: github.event_name == 'pull_request'
         with:
           message: ${{ steps.releases.outputs.message }}
-          comment_includes: ${{ steps.releases.outputs.message }}
+    outputs:
+      staging_host: ${{ steps.releases.outputs.staging_host }}

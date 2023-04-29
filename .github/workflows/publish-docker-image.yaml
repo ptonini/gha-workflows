@@ -20,12 +20,13 @@ on:
       digest:
         description: ''
         value: ${{ jobs.publish_docker_image.outputs.digest }}
+      image:
+        description:
+        value: ${{ inputs.repository }}@${{ jobs.publish_docker_image.outputs.digest }}
 
 jobs:
   publish_docker_image:
     runs-on: ubuntu-latest
-    outputs:
-      digest: ${{ steps.publish_image.outputs.digest }}
     steps:
       - run: env | sort
       - uses: actions/checkout@v3
@@ -38,3 +39,10 @@ jobs:
           repository: ${{ inputs.repository }}
           tags: ${{ inputs.tags }}
           build_arguments: ${{ secrets.BUILD_ARGUMENTS }}
+      - uses: ptonini/gha-set-labels@main
+        with:
+          labels: |
+            published
+            image: ${{ inputs.repository }}@${{ steps.publish_image.outputs.digest }}
+    outputs:
+      digest: ${{ steps.publish_image.outputs.digest }}

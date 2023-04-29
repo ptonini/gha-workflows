@@ -23,5 +23,10 @@ jobs:
         if: github.event.repository.language == 'HCL'
       - uses: ptonini/gha-config-git-user@main
       - uses: EndBug/add-and-commit@v9
+        id: commit
         with:
           message: "chore: automated linting"
+      - uses: thollander/actions-comment-pull-request@v2
+        if: steps.commit.outputs.committed
+        with:
+          message: "Linting performed and committed"
