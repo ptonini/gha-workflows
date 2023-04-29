@@ -1,4 +1,4 @@
-name: detect-changes
+name: paths-filter
 
 on:
   workflow_call:
@@ -18,7 +18,7 @@ on:
         value: ${{ jobs.detect_changes.outputs.changes }}
 
 jobs:
-  detect_changes:
+  paths_filter:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort

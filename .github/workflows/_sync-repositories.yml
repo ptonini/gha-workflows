@@ -12,7 +12,7 @@ on:
 
 jobs:
   detect_changes:
-    uses: ptonini/gha-workflows/.github/workflows/detect-changes.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/paths-filter.yaml@main
     with:
       filters: |
         workflows:
