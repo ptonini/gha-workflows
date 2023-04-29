@@ -5,6 +5,13 @@ concurrency:
 
 on:
   workflow_dispatch: ~
+  push:
+    branches:
+      - master
+      - main
+      - legacy/*
+    paths:
+      - manifest.yaml
 
 permissions:
   id-token: write
@@ -14,6 +21,7 @@ jobs:
   apply_release:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     with:
+      macros: ${{ vars.macros }}
       vault_k8s_role_path: ${{ vars.vault_k8s_role_path }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}

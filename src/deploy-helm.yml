@@ -11,6 +11,7 @@ on:
       - legacy/*
     paths-ignore:
       - manifest.yaml
+      - .github/workflows/*
   pull_request:
     types:
       - opened
@@ -36,17 +37,17 @@ jobs:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   code_linting:
     uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
-    if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && vars.skip_linting != 'true'
+    if: contains('opened synchronize', github.event.action) && vars.skip_linting != 'true'
   security_scan:
     uses: ptonini/gha-workflows/.github/workflows/trufflehog.yaml@main
-    if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
+    if: contains('opened synchronize', github.event.action)
   release_please:
     uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
   
   publish_image:
     uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
-    if:  github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
+    if:  contains('opened synchronize', github.event.action) && !contains(github.event.head_commit.message, '[skip build]')
     with:
       tags: ${{ format('latest pr{0} pr{0}-{1}', github.event.number, github.run_number) }}
     secrets:
@@ -55,12 +56,13 @@ jobs:
         BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
   deploy_to_staging:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
-    if: vars.skip_staging != 'true'
+    if: always() && vars.skip_staging != 'true'
     needs:
       - publish_image
     with:
-      vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
       digest: ${{ needs.publish_image.outputs.digest }}
+      macros: ${{ vars.staging_macros }}
+      vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
   performance_testing:
@@ -73,7 +75,7 @@ jobs:
   
   destroy_staging:
     uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && !startsWith(github.event.pull_request.head.ref, 'release-please--') && vars.skip_staging != 'true'
+    if: github.event.action == 'closed' && vars.skip_staging != 'true' && !startsWith(github.event.pull_request.head.ref, 'release-please--')
     with:
       vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
     secrets:
@@ -81,7 +83,7 @@ jobs:
   
   approve_image:
     uses: ptonini/gha-workflows/.github/workflows/approve-image.yaml@main
-    if: github.event.pull_request.merged && !startsWith(github.event.pull_request.head.ref, 'release-please--')
+    if: github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'published') && !startsWith(github.event.pull_request.head.ref, 'release-please--')
     with:
       approved_tag: ${{ format('pr{0}', github.event.number) }}
   
@@ -93,6 +95,7 @@ jobs:
     needs:
       - promote_image
     with:
+      macros: ${{ vars.macros }}
       vault_k8s_role_path: ${{ vars.vault_k8s_role_path }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}

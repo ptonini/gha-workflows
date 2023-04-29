@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   detect_changes:
-    uses: ptonini/gha-workflows/.github/workflows/detect-changes.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/paths-filter.yaml@main
     with:
       filters_cmd: 'find . -mindepth 3 -maxdepth 3 -type d -not -path "*/.*" -exec bash -c "R=\"{}\"; echo \"\${R#./}: \${R#./}/*\"" \;'
   apply_releases:
@@ -37,7 +37,7 @@ jobs:
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
           validation_addr: ${{ vars.vault_addr }}
-      - uses: hashicorp/vault-action@v2.4.3
+      - uses: hashicorp/vault-action@v2
         with:
           url: ${{ vars.vault_addr }}
           method: ${{ vars.vault_method }}

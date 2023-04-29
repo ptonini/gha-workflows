@@ -13,7 +13,7 @@ jobs:
     if: github.event_name == 'push' && !contains(github.event.commits.*.author.name, 'github-actions[bot]')
 
   detect_changes:
-    uses: ptonini/gha-workflows/.github/workflows/detect-changes.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/paths-filter.yaml@main
 
   publish_charts:
     uses: ptonini/gha-workflows/.github/workflows/publish-helm-charts.yaml@main
