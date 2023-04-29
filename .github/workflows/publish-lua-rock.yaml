@@ -27,5 +27,4 @@ jobs:
           file: ${{ env.ROCK }}-${{ env.VERSION }}-*
           file_glob: true
           tag: ${{ env.ROCK }}-v${{ env.VERSION }}
-          release_name: "${{ env.CHART }}: v${{ env.VERSION }}"
           overwrite: true

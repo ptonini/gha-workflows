@@ -36,7 +36,7 @@ jobs:
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
           validation_addr: ${{ vars.vault_addr }}
-      - uses: hashicorp/vault-action@v2.4.3
+      - uses: hashicorp/vault-action@v2
         with:
           url: ${{ vars.vault_addr }}
           method: ${{ vars.vault_method }}
@@ -44,7 +44,7 @@ jobs:
           role: ${{ vars.vault_role }}
           exportToken: true
           secrets: ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG_MANIFEST;
-      - uses: hashicorp/vault-action@v2.4.3
+      - uses: hashicorp/vault-action@v2
         if: github.event_name == 'pull_request'
         with:
           url: ${{ vars.vault_addr }}

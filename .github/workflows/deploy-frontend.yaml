@@ -21,15 +21,14 @@ jobs:
   deploy_frontend:
     runs-on: ubuntu-latest
     env:
-      AWS_REGION: us-east-1
+      AWS_REGION: ${{ vars.aws_region }}
     steps:
       - run: env | sort
-      - uses: actions/checkout@v3
       - uses: ptonini/gha-openvpn@main
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
           validation_addr: ${{ vars.vault_addr }}
-      - uses: hashicorp/vault-action@v2.4.3
+      - uses: hashicorp/vault-action@v2
         with:
           url: ${{ vars.vault_addr }}
           method: ${{ vars.vault_method }}

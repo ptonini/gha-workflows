@@ -20,9 +20,4 @@ jobs:
         with:
           file: ${{ env.CHART }}-${{ env.VERSION }}.tgz
           tag: ${{ env.CHART }}-v${{ env.VERSION }}
-          release_name: "${{ env.CHART }}: v${{ env.VERSION }}"
           overwrite: true
-      - uses: actions/upload-artifact@v3
-        with:
-          path: ${{ env.CHART }}-${{ env.VERSION }}.tgz
-          name: builds

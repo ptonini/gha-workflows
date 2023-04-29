@@ -25,7 +25,7 @@ jobs:
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
           validation_addr: ${{ vars.vault_addr }}
-      - uses: hashicorp/vault-action@v2.4.3
+      - uses: hashicorp/vault-action@v2
         with:
           method: ${{ vars.vault_method }}
           path: ${{ vars.vault_path }}
