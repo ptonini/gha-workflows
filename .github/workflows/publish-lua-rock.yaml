@@ -12,6 +12,8 @@ jobs:
   publish_lua_rocks:
     runs-on: ubuntu-latest
     steps:
+      - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
       - uses: actions/checkout@v3
       - uses: leafo/gh-actions-lua@10
         with:

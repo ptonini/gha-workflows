@@ -27,8 +27,6 @@ on:
 jobs:
   deploy_helm_releases:
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ github.token }}
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
@@ -42,14 +40,9 @@ jobs:
           method: ${{ vars.vault_method }}
           path: ${{ vars.vault_path }}
           role: ${{ vars.vault_role }}
-          exportToken: true
-          secrets: ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG_MANIFEST;
-      - uses: hashicorp/vault-action@v2
-        if: github.event_name == 'pull_request'
-        with:
-          url: ${{ vars.vault_addr }}
-          token: ${{ env.VAULT_TOKEN }}
-          secrets: ${{ vars.vault_github_token_path }} token | GH_TOKEN;
+          secrets: |
+            ${{ vars.vault_github_token_path }} token | GH_TOKEN;
+            ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG;
       - uses: ptonini/gha-create-helm-releases@main
         id: releases
         with:
@@ -62,8 +55,10 @@ jobs:
           github_token: ${{ env.GH_TOKEN }}
       - uses: ptonini/gha-deploy-helm-releases@main
         with:
-          kubeconfig_content: ${{ env.KUBECONFIG_MANIFEST }}
           releases: ${{ steps.releases.outputs.releases }}
+          kubeconfig: ${{ env.KUBECONFIG }}
+      - run: echo '${{ steps.releases.outputs.message }}' | tee -a ${GITHUB_STEP_SUMMARY}
+        if: github.event_name == 'pull_request'
       - uses: thollander/actions-comment-pull-request@v2
         if: github.event_name == 'pull_request'
         with:

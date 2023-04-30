@@ -3,22 +3,23 @@ name: performance-testing
 on:
   workflow_call:
     inputs:
-      hosts:
+      host:
         description: ''
         required: true
         type: string
 
 jobs:
   performance_testing:
-    timeout-minutes: 5
+    timeout-minutes: ${{ vars.performance_test_timeout }}
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
       - uses: actions/checkout@v3
       - uses: grafana/k6-action@v0.2.0
         if: hashFiles(vars.k6_test_file)
         with:
           filename: ${{ vars.k6_test_file }}
         env:
-          HOSTS: ${{ inputs.hosts }}
+          HOST: ${{ inputs.host }}
           SCHEMA: https

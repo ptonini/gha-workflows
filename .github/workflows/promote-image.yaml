@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
       - uses: actions/checkout@v3
       - run: echo "VERSION=$(jq -r '."."' < ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
       - uses: ptonini/gha-retag-docker-image@main

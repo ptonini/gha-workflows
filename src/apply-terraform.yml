@@ -20,11 +20,11 @@ jobs:
   plan:
     uses: ptonini/gha-workflows/.github/workflows/terraform-plan.yaml@main
     secrets:
-      openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
+      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
   apply:
     uses: ptonini/gha-workflows/.github/workflows/terraform-apply.yaml@main
     if: needs.plan.outputs.exitcode == '2'
     needs:
       - plan
     secrets:
-      openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
+      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}

@@ -20,15 +20,13 @@ on:
       digest:
         description: ''
         value: ${{ jobs.publish_docker_image.outputs.digest }}
-      image:
-        description:
-        value: ${{ inputs.repository }}@${{ jobs.publish_docker_image.outputs.digest }}
 
 jobs:
   publish_docker_image:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
       - uses: actions/checkout@v3
       - uses: ptonini/gha-publish-docker-image@main
         id: publish_image
@@ -41,8 +39,6 @@ jobs:
           build_arguments: ${{ secrets.BUILD_ARGUMENTS }}
       - uses: ptonini/gha-set-labels@main
         with:
-          labels: |
-            published
-            image: ${{ inputs.repository }}@${{ steps.publish_image.outputs.digest }}
+          labels: published
     outputs:
       digest: ${{ steps.publish_image.outputs.digest }}

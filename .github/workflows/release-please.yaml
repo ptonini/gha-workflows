@@ -19,6 +19,7 @@ jobs:
       paths_released: ${{ steps.release_please.outputs.paths_released }}
     steps:
       - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
       - uses: google-github-actions/release-please-action@v3
         id: release_please
         with:

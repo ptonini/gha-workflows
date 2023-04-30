@@ -8,11 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - run: "[[ ! -e .trufflehog-ignore ]] || echo 'TRUFFLEHOG_EXTRA_ARGS=--exclude-paths=.trufflehog-ignore' | tee -a $GITHUB_ENV"
-      - run: "[[ -z ${RUNNER_DEBUG} ]] || 'TRUFFLEHOG_EXTRA_ARGS={{ env.TRUFFLEHOG_EXTRA_ARGS }} --debug' | tee -a $GITHUB_ENV"
+      - run: test ! -e .trufflehog-ignore || echo 'TRUFFLEHOG_EXTRA_ARGS=--exclude-paths=.trufflehog-ignore' | tee -a $GITHUB_ENV
+      - run: test -z ${RUNNER_DEBUG} || 'TRUFFLEHOG_EXTRA_ARGS+= --debug' | tee -a $GITHUB_ENV
       - uses: trufflesecurity/trufflehog@main
         with:
           path: ./

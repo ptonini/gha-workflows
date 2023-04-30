@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
       - uses: ptonini/gha-retag-docker-image@main
         with:
           registry: ${{ vars.container_registry }}
@@ -25,4 +26,4 @@ jobs:
           password: ${{ github.token }}
           repository: ${{ inputs.repository }}
           source_tag: ${{ inputs.approved_tag }}
-          tags: latest ${{ vars.pr_approved_tag }} ${{ inputs.approved_tag }}
+          tags: latest ${{ vars.pr_approved_tag }} ${{ format('pr{0}', github.event.number) }}

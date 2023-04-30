@@ -14,12 +14,9 @@ on:
 jobs:
   terraform_plan:
     runs-on: ubuntu-latest
-    outputs:
-      exitcode: ${{ steps.plan.outputs.exitcode }}
-    env:
-      VAULT_ADDR: ${{ vars.vault_addr }}
     steps:
       - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2.0.3
         with:
@@ -40,6 +37,8 @@ jobs:
       - run: terraform plan -out=${{ vars.terraform_plan_filename }} -no-color -input=false -detailed-exitcode
         id: plan
         continue-on-error: true
+        env:
+          VAULT_ADDR: ${{ vars.vault_addr }}
       - run: echo '```${{ steps.plan.outputs.stderr }}```' >> $GITHUB_STEP_SUMMARY && exit 1
         if: steps.plan.outputs.exitcode == '1'
       - run: terraform show -no-color ${{ vars.terraform_plan_filename }}
@@ -53,3 +52,5 @@ jobs:
           name: plan
           path: ${{ vars.terraform_plan_filename }}
           retention-days: 1
+    outputs:
+      exitcode: ${{ steps.plan.outputs.exitcode }}

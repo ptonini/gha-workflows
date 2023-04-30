@@ -43,34 +43,7 @@ jobs:
   release_please:
     uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
-  
-  publish_image:
-    uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
-    if:  github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && vars.skip_staging != 'true'
-    with:
-      tags: ${{ format('latest pr{0} pr{0}-{1}', github.event.number, github.run_number) }}
-    secrets:
-      BUILD_ARGUMENTS: |
-        BUILD_USERNAME=${{ github.actor }}
-        BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
-  deploy_to_staging:
-    uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
-    needs:
-      - publish_image
-    with:
-      vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
-      digest: ${{ needs.publish_image.outputs.digest }}
-    secrets:
-      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-  
-  destroy_staging:
-    uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && !startsWith(github.event.pull_request.head.ref, 'release-please--') && vars.skip_staging != 'true'
-    with:
-      vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
-    secrets:
-      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-  
+
   publish_frontend:
     uses: ptonini/gha-workflows/.github/workflows/publish-frontend.yaml@main
     if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]')

@@ -15,6 +15,7 @@ jobs:
       VAULT_ADDR: ${{ vars.vault_addr }}
     steps:
       - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2.0.3
         with:

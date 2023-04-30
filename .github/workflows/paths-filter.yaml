@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
       - uses: actions/checkout@v3
       - run: jq -r 'keys | reduce .[] as $i ({}; .[$i] = $i+"/**")' ${{ vars.rp_manifest_file }} > ${{ inputs.filters }}
         if: hashFiles(vars.rp_manifest_file)

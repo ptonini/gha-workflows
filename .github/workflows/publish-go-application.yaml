@@ -8,25 +8,17 @@ on:
         default: ${{ github.event.repository.name }}
         required: false
         type: string
-      main_file:
-        description: ''
-        default: ${{ vars.go_main_file }}
-        required: false
-        type: string
-      builder_image:
-        description: ''
-        default: ${{ vars.go_builder_image }}
-        required: false
-        type: string
+
 jobs:
   publish_go_application:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
       - uses: actions/checkout@v3
       - run: echo "VERSION=$(jq -r '."."' < ${{ vars.rp_manifest_file }})" | tee -a $GITHUB_ENV
       - run: mkdir dist
-      - run: docker run -v $(pwd):$(pwd) -w $(pwd) ${{ inputs.builder_image }} go build -o dist/${{ inputs.app_name }} ${{ inputs.main_file }}
+      - run: docker run -v $(pwd):$(pwd) -w $(pwd) ${{ vars.go_builder_image }} go build -o dist/${{ inputs.app_name }} ${{ vars.go_main_file }}
       - run: sha256sum dist/${{ inputs.app_name }} > dist/SHA256SUMS
       - uses: ptonini/gha-upload-release@main
         with:

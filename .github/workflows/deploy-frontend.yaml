@@ -16,7 +16,6 @@ on:
         description: ''
         required: true
 
-        
 jobs:
   deploy_frontend:
     runs-on: ubuntu-latest
@@ -24,6 +23,7 @@ jobs:
       AWS_REGION: ${{ vars.aws_region }}
     steps:
       - run: env | sort
+      - run: cat ${GITHUB_EVENT_PATH}
       - uses: ptonini/gha-openvpn@main
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
