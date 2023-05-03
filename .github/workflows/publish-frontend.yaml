@@ -36,6 +36,7 @@ jobs:
           file: ${{ env.ARTIFACT }}
           repo_token: ${{ github.token }}
           tag: v${{ env.VERSION }}
+          overwrite: true
     outputs:
       version: ${{ env.VERSION }}
       artifact: ${{ env.ARTIFACT }}

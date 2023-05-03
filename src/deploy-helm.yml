@@ -102,8 +102,6 @@ jobs:
       github.event_name == 'pull_request' && github.event.pull_request.merged && 
       contains(github.event.pull_request.labels.*.name, 'published') && 
       !startsWith(github.event.pull_request.head.ref, vars.release_pr_branch_prefix)
-    with:
-      approved_tag: ${{ format('pr{0}', github.event.number) }}
 
   promote_image:
     uses: ptonini/gha-workflows/.github/workflows/promote-image.yaml@main

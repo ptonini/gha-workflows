@@ -8,7 +8,6 @@ on:
       - .github/workflows/*
       - '!.github/workflows/_*'
       - src/*
-      - modules/**
 
 jobs:
   detect_changes:
@@ -19,8 +18,6 @@ jobs:
           - '.github/workflows/*'
         src:
           - 'src/*'
-        modules:
-          - 'modules/**'
   sync_repositories:
     runs-on: ubuntu-latest
     if: needs.detect_changes.outputs.changes != '[]'
@@ -39,8 +36,8 @@ jobs:
           repository: ${{ matrix.repository }}
           ssh-key: ${{ secrets.SSH_KEY }}
           path: child_repository
-      - run: rpl "${{ github.repository }}" "${{ matrix.repository }}" src/* && rsync -vr src child_repository
-      - run: rsync -vr modules child_repository
+      - run: rpl "${{ github.repository }}" "${{ matrix.repository }}" src/*
+      - run: rsync -vr src child_repository
       - run: rsync -vr --exclude '_*' .github/workflows child_repository/.github
       - uses: EndBug/add-and-commit@v9
         with:

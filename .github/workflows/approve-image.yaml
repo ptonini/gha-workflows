@@ -10,7 +10,7 @@ on:
         type: string
       approved_tag:
         description: ''
-        required: true
+        required: false
         type: string
 
 jobs:

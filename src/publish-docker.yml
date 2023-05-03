@@ -38,17 +38,11 @@ jobs:
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
     with:
       tags: ${{ format('latest pr{0} pr{0}-{1}', github.event.number, github.run_number) }}
-    secrets:
-      BUILD_ARGUMENTS: |
-        BUILD_USERNAME=${{ github.actor }}
-        BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
   
   approve_image:
     uses: ptonini/gha-workflows/.github/workflows/approve-image.yaml@main
     if: github.event.pull_request.merged
-    with:
-      approved_tag: ${{ format('pr{0}', github.event.number) }}
-  
+
   promote_image:
     uses: ptonini/gha-workflows/.github/workflows/promote-image.yaml@main
     if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]')

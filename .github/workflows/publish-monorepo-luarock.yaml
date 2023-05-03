@@ -1,4 +1,4 @@
-name: publish-lua-rock
+name: publish-monorepo-luarock
 
 on:
   workflow_call:
@@ -9,7 +9,7 @@ on:
         type: string
 
 jobs:
-  publish_lua_rocks:
+  publish_monorepo_luarock:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
@@ -30,3 +30,7 @@ jobs:
           file_glob: true
           tag: ${{ env.ROCK }}-v${{ env.VERSION }}
           overwrite: true
+      - uses: actions/upload-artifact@v3
+        with:
+          name: rocks
+          path: ${{ env.PACKAGE }}-${{ env.VERSION }}-*

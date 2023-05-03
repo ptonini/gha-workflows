@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - master
     paths:
       - '*/*'
 
@@ -12,7 +13,7 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
   publish_images:
-    uses: ptonini/gha-workflows/.github/workflows/publish-docker-monorepo-image.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/publish-monorepo-docker-image.yaml@main
     if: needs.release_please.outputs.paths_released != '[]'
     needs:
       - release_please
@@ -21,4 +22,3 @@ jobs:
         path: ${{ fromJSON(needs.release_please.outputs.paths_released) }}
     with:
       path: ${{ matrix.path }}
-      packages: ${{ needs.release_please.outputs.packages }}

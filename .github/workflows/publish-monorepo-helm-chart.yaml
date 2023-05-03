@@ -1,4 +1,4 @@
-name: publish-helm-charts
+name: publish-monorepo-helm-chart
 
 on:
   workflow_call:
@@ -9,7 +9,7 @@ on:
         type: string
 
 jobs:
-  publish_charts:
+  publish_monorepo_helm_chart:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
@@ -23,3 +23,7 @@ jobs:
           file: ${{ env.CHART }}-${{ env.VERSION }}.tgz
           tag: ${{ env.CHART }}-v${{ env.VERSION }}
           overwrite: true
+      - uses: actions/upload-artifact@v3
+        with:
+          path: ${{ env.CHART }}-${{ env.VERSION }}.tgz
+          name: builds
