@@ -9,6 +9,10 @@ on:
       - '*/*'
 
 jobs:
+  detect_changes:
+    uses: ptonini/gha-workflows/.github/workflows/detect-changes.yaml@main
+    if: github.event_name == 'pull_request'
+
   release_please:
     uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'

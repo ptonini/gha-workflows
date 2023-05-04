@@ -48,6 +48,7 @@ jobs:
         with:
           macros: ${{ inputs.macros }}
           digest: ${{ inputs.digest }}
+          demonstration: ${{ vars.demonstration }}
           container_registry: ${{ vars.container_registry }}
           manifest_file: ${{ vars.manifest_file }}
           rp_manifest_file: ${{ vars.rp_manifest_file }}
