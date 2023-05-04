@@ -10,7 +10,6 @@ on:
 jobs:
   terraform_apply:
     runs-on: ubuntu-latest
-    environment: terraform
     env:
       VAULT_ADDR: ${{ vars.vault_addr }}
     steps:
@@ -33,12 +32,13 @@ jobs:
           exportToken: true
           secrets: ${{ vars.vault_gcp_roleset_path }} token | GCS_ACCESS_TOKEN;
       - run: terraform init -input=false -backend-config="access_token=${GCS_ACCESS_TOKEN}"
-      - uses: actions/download-artifact@v3
+      - uses: ptonini/gha-get-labels@main
         with:
+          labels: planned_run_id
+      - uses: dawidd6/action-download-artifact@v2
+        with:
+          run_id: ${{ env.PLANNED_RUN_ID }}
           name: plan
-      - run: terraform apply ${{ vars.terraform_plan_filename }}
+      - run: terraform apply -auto-approve -input=false ${{ vars.terraform_plan_filename }}
         env:
           VAULT_ADDR: ${{ vars.vault_addr }}
-      - uses: geekyeggo/delete-artifact@v2
-        with:
-          name: plan

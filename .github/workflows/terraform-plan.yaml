@@ -6,10 +6,6 @@ on:
       OPENVPN_CONFIG:
         description: ''
         required: true
-    outputs:
-      exitcode:
-        description: ''
-        value: ${{ jobs.terraform_plan.outputs.exitcode }}
 
 jobs:
   terraform_plan:
@@ -52,5 +48,10 @@ jobs:
           name: plan
           path: ${{ vars.terraform_plan_filename }}
           retention-days: 1
-    outputs:
-      exitcode: ${{ steps.plan.outputs.exitcode }}
+      - uses: ptonini/gha-set-labels@main
+        if: steps.plan.outputs.exitcode == '2'
+        with:
+          overwrite: true
+          labels: | 
+            planned
+            planned_run_id: ${{ github.run_id }}

@@ -5,7 +5,6 @@ on:
     inputs:
       pypi_addr:
         description: ''
-        required: true
         default: ${{ vars.pypi_addr }}
         type: string
         
@@ -23,9 +22,3 @@ jobs:
       - run: pip3 install twine
       - run: python3 setup.py sdist
       - run: python3 -m twine upload dist/* --verbose --repository-url ${{ inputs.pypi_addr }} --username ${{ github.event.repository.name }} --password ${{ github.token }}
-      - uses: ptonini/gha-upload-release@main
-        with:
-          file: dist/**
-          file_glob: true
-          repo_token: ${{ github.token }}
-          tag: v${{ env.VERSION }}

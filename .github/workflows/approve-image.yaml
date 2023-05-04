@@ -8,10 +8,6 @@ on:
         required: false
         default: ${{ format('{0}/{1}', vars.container_registry, github.event.repository.name ) }}
         type: string
-      approved_tag:
-        description: ''
-        required: false
-        type: string
 
 jobs:
   approve_image:
@@ -25,5 +21,5 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
           repository: ${{ inputs.repository }}
-          source_tag: ${{ inputs.approved_tag }}
+          source_tag: ${{ format('pr{ 0 }', github.event.number) }}
           tags: latest ${{ vars.pr_approved_tag }} ${{ format('pr{0}', github.event.number) }}

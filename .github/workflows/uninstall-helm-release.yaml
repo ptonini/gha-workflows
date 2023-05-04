@@ -1,16 +1,8 @@
-name: deploy-helm-releases
+name: uninstall-helm-release
 
 on:
   workflow_call:
     inputs:
-      macros:
-        description: ''
-        required: true
-        type: string
-      digest:
-        description: ''
-        required: false
-        type: string
       vault_k8s_role_path:
         description: ''
         required: true
@@ -19,13 +11,9 @@ on:
       OPENVPN_CONFIG:
         description: ''
         required: true
-    outputs:
-      staging_host:
-        description: ''
-        value: ${{ jobs.deploy_helm_releases.outputs.staging_host }}
 
 jobs:
-  deploy_helm_releases:
+  uninstall_helm_release:
     runs-on: ubuntu-latest
     steps:
       - run: env | sort
@@ -40,27 +28,15 @@ jobs:
           method: ${{ vars.vault_method }}
           path: ${{ vars.vault_path }}
           role: ${{ vars.vault_role }}
-          secrets: |
-            ${{ vars.vault_github_token_path }} token | GH_TOKEN;
-            ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG;
+          secrets: ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG;
       - uses: ptonini/gha-create-helm-release-files@main
         id: releases
         with:
-          macros: ${{ inputs.macros }}
-          digest: ${{ inputs.digest }}
-          demonstration: ${{ vars.demonstration_repository }}
           container_registry: ${{ vars.container_registry }}
           manifest_file: ${{ vars.manifest_file }}
           rp_manifest_file: ${{ vars.rp_manifest_file }}
           staging_domain: ${{ vars.staging_domain }}
-          github_token: ${{ env.GH_TOKEN }}
-      - uses: ptonini/gha-deploy-helm-releases@main
+      - uses: ptonini/gha-uninstall-helm-releases@main
         with:
           releases: ${{ steps.releases.outputs.releases }}
           kubeconfig: ${{ env.KUBECONFIG }}
-      - uses: thollander/actions-comment-pull-request@v2
-        if: github.event_name == 'pull_request'
-        with:
-          message: ${{ steps.releases.outputs.message }}
-    outputs:
-      staging_host: ${{ steps.releases.outputs.staging_host }}
