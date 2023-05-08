@@ -43,5 +43,11 @@ jobs:
           run_id: ${{ env.PLANNED_RUN_ID }}
           github_token: ${{ env.GH_TOKEN }}
       - run: terraform apply -auto-approve -input=false ${{ vars.terraform_plan_filename }}
+        id: apply
         env:
           VAULT_ADDR: ${{ vars.vault_addr }}
+      - run: echo '```${{ steps.apply.outputs.stdout }}${{ steps.apply.outputs.stderr }}```' >> $GITHUB_STEP_SUMMARY
+      - uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: '```${{ steps.apply.outputs.stdout }}${{ steps.apply.outputs.stderr }}```'
+          comment_tag: apply_output

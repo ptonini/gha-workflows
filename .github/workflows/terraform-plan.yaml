@@ -28,20 +28,31 @@ jobs:
           path: ${{ vars.vault_path }}
           role: ${{ vars.vault_role }}
           exportToken: true
-          secrets: ${{ vars.vault_gcp_roleset_path }} token | GCS_ACCESS_TOKEN;
+          secrets: |
+            ${{ vars.vault_github_token_path }} token | GH_TOKEN;
+            ${{ vars.vault_gcp_roleset_path }} token | GCS_ACCESS_TOKEN;
+
+      # Initialize terraform and create plan
       - run: terraform init -input=false -backend-config="access_token=${GCS_ACCESS_TOKEN}"
       - run: terraform plan -out=${{ vars.terraform_plan_filename }} -no-color -input=false -detailed-exitcode
         id: plan
         continue-on-error: true
         env:
           VAULT_ADDR: ${{ vars.vault_addr }}
-      - run: echo '```${{ steps.plan.outputs.stderr }}```' >> $GITHUB_STEP_SUMMARY && exit 1
-        if: steps.plan.outputs.exitcode == '1'
+
+      # Generate resumed plan view
       - run: terraform show -no-color ${{ vars.terraform_plan_filename }}
         id: show
         if: hashFiles(vars.terraform_plan_filename)
-      - run: echo '```${{ steps.show.outputs.stdout }}```' >> $GITHUB_STEP_SUMMARY
-        if: hashFiles(vars.terraform_plan_filename)
+
+      # Save outputs to step summary and pr comments
+      - run: echo '```${{ steps.show.outputs.stdout }}${{ steps.plan.outputs.stderr }}```' >> $GITHUB_STEP_SUMMARY
+      - uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: '```${{ steps.show.outputs.stdout }}${{ steps.plan.outputs.stderr }}```'
+          comment_tag: plan_output
+
+      # Upload plan to artifact and set labels
       - uses: actions/upload-artifact@v3
         if: steps.plan.outputs.exitcode == '2'
         with:
@@ -52,6 +63,9 @@ jobs:
         if: steps.plan.outputs.exitcode == '2'
         with:
           overwrite: true
+          github_token: ${{ env.GH_TOKEN }}
           labels: | 
             planned
             planned_run_id: ${{ github.run_id }}
+      - run: exit 1
+        if: steps.plan.outputs.exitcode == '1'
