@@ -4,8 +4,11 @@ concurrency:
   group: ${{ github.repository }}
 
 on:
-  workflow_dispatch: ~
-  push:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - closed
     branches:
       - master
       - main
@@ -14,17 +17,26 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
+
+  code_linting:
+    uses: nodis-com-br/github-actions-workflows/.github/workflows/code-linting.yaml@main
+    if: contains('opened synchronize', github.event.action) && vars.skip_linting != 'true'
+  security_scan:
+    uses: nodis-com-br/github-actions-workflows/.github/workflows/trufflehog.yaml@main
+    if: contains('opened synchronize', github.event.action)
+
   plan:
-    uses: ptonini/gha-workflows/.github/workflows/terraform-plan.yaml@main
+    uses: nodis-com-br/github-actions-workflows/.github/workflows/terraform-plan.yaml@main
+    if: contains('opened synchronize', github.event.action)
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+
   apply:
-    uses: ptonini/gha-workflows/.github/workflows/terraform-apply.yaml@main
-    if: needs.plan.outputs.exitcode == '2'
-    needs:
-      - plan
+    uses: nodis-com-br/github-actions-workflows/.github/workflows/terraform-apply.yaml@main
+    if: github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'planned')
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}

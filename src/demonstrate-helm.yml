@@ -16,8 +16,10 @@ on:
 permissions:
   id-token: write
   contents: read
+  pull-requests: write
 
 jobs:
+
   deploy_demonstration:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     if: contains('opened synchronize', github.event.action)
@@ -26,6 +28,7 @@ jobs:
       vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+
   destroy_demonstration:
     uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
     if: github.event.action == 'closed'
