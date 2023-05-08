@@ -30,15 +30,18 @@ jobs:
           path: ${{ vars.vault_path }}
           role: ${{ vars.vault_role }}
           exportToken: true
-          secrets: ${{ vars.vault_gcp_roleset_path }} token | GCS_ACCESS_TOKEN;
+          secrets: |
+            ${{ vars.vault_gcp_roleset_path }} token | GCS_ACCESS_TOKEN;
+            ${{ vars.vault_github_token_path }} token | GH_TOKEN;
       - run: terraform init -input=false -backend-config="access_token=${GCS_ACCESS_TOKEN}"
       - uses: ptonini/gha-get-labels@main
         with:
           labels: planned_run_id
       - uses: dawidd6/action-download-artifact@v2
         with:
-          run_id: ${{ env.PLANNED_RUN_ID }}
           name: plan
+          run_id: ${{ env.PLANNED_RUN_ID }}
+          github_token: ${{ env.GH_TOKEN }}
       - run: terraform apply -auto-approve -input=false ${{ vars.terraform_plan_filename }}
         env:
           VAULT_ADDR: ${{ vars.vault_addr }}
