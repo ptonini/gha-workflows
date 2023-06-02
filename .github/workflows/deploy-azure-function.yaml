@@ -1,0 +1,58 @@
+name: deploy-azure-function
+
+on:
+  workflow_call:
+    inputs:
+      app_name:
+        description: ''
+        required: false
+        default: ${{ github.event.repository.name }}
+        type: string
+      vault_sp_path:
+        description: ''
+        required: true
+        type: string
+    secrets:
+      OPENVPN_CONFIG:
+        description: ''
+        required: true
+
+jobs:
+  deploy-azure-function:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ vars.dotnet_version }}
+      - uses: ptonini/gha-openvpn@main
+        with:
+          openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
+          validation_addr: ${{ vars.vault_addr }}
+      - uses: hashicorp/vault-action@v2
+        id: vault-action
+        with:
+          url: ${{ vars.vault_addr }}
+          method: ${{ vars.vault_method }}
+          path: ${{ vars.vault_path }}
+          role: ${{ vars.vault_role }}
+          secrets: | 
+            ${{ inputs.vault_sp_path }} clientId | CLIENT_ID;
+            ${{ inputs.vault_sp_path }} clientSecret | CLIENT_SECRET;
+            ${{ inputs.vault_sp_path }} tenantId | TENANT_ID;
+            ${{ inputs.vault_sp_path }} subscriptionId | SUBSCRIPTION_ID;
+      - uses: azure/login@v1
+        with:
+          creds: '{"clientId":"${{ env.CLIENT_ID }}","clientSecret":"${{ env.CLIENT_SECRET }}","tenantId":"${{ env.TENANT_ID }}","subscriptionId":"${{ env.SUBSCRIPTION_ID }}"}'
+      - run: pushd ./.
+      - run: dotnet build --configuration Release --output ./output
+      - run: popd || exit 0
+      - run: |
+          PUBLISH_PROFILE=$(az functionapp deployment list-publishing-profiles --resource-group quality --name ${{ inputs.app_name }} --xml)
+          echo echo "::add-mask::${PUBLISH_PROFILE}" 
+          echo "PUBLISH_PROFILE=${PUBLISH_PROFILE}" >> ${GITHUB_ENV}
+      - uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ inputs.app_name }}
+          package: output
+          publish-profile: ${{ env.PUBLISH_PROFILE }}

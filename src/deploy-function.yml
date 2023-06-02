@@ -1,0 +1,73 @@
+name: deploy
+
+concurrency:
+  group: ${{ github.event_name }}
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - legacy/*
+    paths-ignore:
+      - .github/workflows/*
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - closed
+    branches:
+      - master
+      - main
+      - legacy/*
+
+permissions:
+  id-token: write
+  packages: write
+  pull-requests: write
+  contents: write
+
+jobs:
+  
+  code_testing:
+    uses: ptonini/gha-workflows/.github/workflows/code-testing.yaml@main
+    if: |
+      github.event.action != 'closed' && 
+      github.event.head_commit.author.name != 'github-actions[bot]' && 
+      !startsWith(github.event.pull_request.head.ref, vars.staging_branch_prefix) && 
+      vars.skip_testing != 'true'
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  code_linting:
+    uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
+    if: |
+      github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) &&
+      !startsWith(github.event.pull_request.head.ref, vars.staging_branch_prefix) && 
+      vars.skip_linting != 'true'
+  security_scan:
+    uses: ptonini/gha-workflows/.github/workflows/trufflehog.yaml@main
+    if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
+  release_please:
+    uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
+    if: github.event_name == 'push'
+
+  deploy_to_staging:
+    uses: ptonini/gha-workflows/.github/workflows/deploy-azure-function.yaml@main
+    if: |
+      github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && 
+      always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') &&
+      vars.skip_staging != 'true'
+    with:
+      app_name: ${{ var.staging_function_app_name }}
+      vault_sp_path: ${{ var.vault_azr_sp_dev_path }}
+    secrets:
+      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+
+  deploy_to_production:
+    uses: ptonini/gha-workflows/.github/workflows/deploy-azure-function.yaml@main
+    if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]')
+    with:
+      app_name: ${{ var.function_app_name }}
+      vault_sp_path: ${{ var.vault_azr_sp_prd_path }}
+    secrets:
+      OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
