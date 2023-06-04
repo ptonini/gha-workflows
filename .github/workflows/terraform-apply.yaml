@@ -3,6 +3,9 @@ name: terraform-apply
 on:
   workflow_call:
     secrets:
+      GCS_BACKEND_ENCRYPTION_KEY:
+        description: ''
+        required: true
       OPENVPN_CONFIG:
         description: ''
         required: true
@@ -19,21 +22,8 @@ jobs:
       - uses: hashicorp/setup-terraform@v2.0.3
         with:
           terraform_version: ${{ vars.terraform_version }}
-      - uses: ptonini/gha-openvpn@main
-        with:
-          openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
-          validation_addr: ${{ vars.vault_addr }}
-      - uses: hashicorp/vault-action@v2
-        with:
-          url: ${{ vars.vault_addr }}
-          method: ${{ vars.vault_method }}
-          path: ${{ vars.vault_path }}
-          role: ${{ vars.vault_role }}
-          exportToken: true
-          secrets: |
-            ${{ vars.vault_gcp_roleset_path }} token | GCS_ACCESS_TOKEN;
-            ${{ vars.vault_github_token_path }} token | GH_TOKEN;
-      - run: terraform init -input=false -backend-config="access_token=${GCS_ACCESS_TOKEN}"
+
+      # Fetch approved plan
       - uses: ptonini/gha-get-labels@main
         with:
           labels: planned_run_id
@@ -42,12 +32,28 @@ jobs:
           name: plan
           run_id: ${{ env.PLANNED_RUN_ID }}
           github_token: ${{ env.GH_TOKEN }}
+
+      # Connect to VPN
+      - uses: ptonini/gha-openvpn@main
+        with:
+          openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
+          validation_addr: ${{ vars.vault_addr }}
+
+      # Fetch github token and backend credentials from Vault
+      - uses: hashicorp/vault-action@v2
+        with:
+          url: ${{ vars.vault_addr }}
+          method: ${{ vars.vault_method }}
+          path: ${{ vars.vault_path }}
+          role: ${{ vars.vault_role }}
+          exportToken: true
+          secrets: |
+            ${{ vars.vault_github_token_path }} token | GH_TOKEN;
+            ${{ vars.vault_gcp_roleset_path }} token | GCS_ACCESS_TOKEN;
+
+      # Initialize terraform and apply plan
+      - run: terraform init -input=false -backend-config="access_token=${GCS_ACCESS_TOKEN}" -backend-config="encryption_key=${{ secrets.GCS_BACKEND_ENCRYPTION_KEY }}"
       - run: terraform apply -auto-approve -input=false ${{ vars.terraform_plan_filename }}
         id: apply
         env:
           VAULT_ADDR: ${{ vars.vault_addr }}
-      - run: echo '```${{ steps.apply.outputs.stdout }}${{ steps.apply.outputs.stderr }}```' >> $GITHUB_STEP_SUMMARY
-      - uses: thollander/actions-comment-pull-request@v2
-        with:
-          message: '```${{ steps.apply.outputs.stdout }}${{ steps.apply.outputs.stderr }}```'
-          comment_tag: apply_output

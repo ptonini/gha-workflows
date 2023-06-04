@@ -33,10 +33,12 @@ jobs:
     uses: nodis-com-br/github-actions-workflows/.github/workflows/terraform-plan.yaml@main
     if: contains('opened synchronize', github.event.action)
     secrets:
+      GCS_BACKEND_ENCRYPTION_KEY: ${{ secrets.GCS_BACKEND_ENCRYPTION_KEY }}
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
 
   apply:
     uses: nodis-com-br/github-actions-workflows/.github/workflows/terraform-apply.yaml@main
     if: github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'planned')
     secrets:
+      GCS_BACKEND_ENCRYPTION_KEY: ${{ secrets.GCS_BACKEND_ENCRYPTION_KEY }}
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}

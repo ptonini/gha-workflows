@@ -53,10 +53,7 @@ jobs:
 
   deploy_to_staging:
     uses: ptonini/gha-workflows/.github/workflows/deploy-azure-function.yaml@main
-    if: |
-      github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && 
-      always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') &&
-      vars.skip_staging != 'true'
+    if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && vars.skip_staging != 'true'
     with:
       app_name: ${{ var.staging_function_app_name }}
       vault_sp_path: ${{ var.vault_azr_sp_dev_path }}

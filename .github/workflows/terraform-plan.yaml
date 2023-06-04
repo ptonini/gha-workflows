@@ -3,6 +3,9 @@ name: terraform-plan
 on:
   workflow_call:
     secrets:
+      GCS_BACKEND_ENCRYPTION_KEY:
+        description: ''
+        required: true
       OPENVPN_CONFIG:
         description: ''
         required: true
@@ -17,10 +20,14 @@ jobs:
       - uses: hashicorp/setup-terraform@v2.0.3
         with:
           terraform_version: ${{ vars.terraform_version }}
+
+      # Connect to VPN
       - uses: ptonini/gha-openvpn@main
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
           validation_addr: ${{ vars.vault_addr }}
+
+      # Fetch github token and backend credentials from Vault
       - uses: hashicorp/vault-action@v2
         with:
           url: ${{ vars.vault_addr }}
@@ -33,7 +40,7 @@ jobs:
             ${{ vars.vault_gcp_roleset_path }} token | GCS_ACCESS_TOKEN;
 
       # Initialize terraform and create plan
-      - run: terraform init -input=false -backend-config="access_token=${GCS_ACCESS_TOKEN}"
+      - run: terraform init -input=false -backend-config="access_token=${GCS_ACCESS_TOKEN}" -backend-config="encryption_key=${{ secrets.GCS_BACKEND_ENCRYPTION_KEY }}"
       - run: terraform plan -out=${{ vars.terraform_plan_filename }} -no-color -input=false -detailed-exitcode
         id: plan
         continue-on-error: true
