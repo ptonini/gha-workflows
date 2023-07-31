@@ -47,12 +47,7 @@ jobs:
       - run: pushd ./.
       - run: dotnet build --configuration Release --output ./output
       - run: popd || exit 0
-#      - run: |
-#          PUBLISH_PROFILE=$(az functionapp deployment list-publishing-profiles --resource-group quality --name ${{ inputs.app_name }} --xml)
-#          echo "::add-mask::${PUBLISH_PROFILE}"
-#          echo "PUBLISH_PROFILE=${PUBLISH_PROFILE}" >> ${GITHUB_ENV}
       - uses: Azure/functions-action@v1
         with:
           app-name: ${{ inputs.app_name }}
           package: output
-#          publish-profile: ${{ env.PUBLISH_PROFILE }}

@@ -23,16 +23,6 @@ jobs:
         with:
           terraform_version: ${{ vars.terraform_version }}
 
-      # Fetch approved plan
-      - uses: ptonini/gha-get-labels@main
-        with:
-          labels: planned_run_id
-      - uses: dawidd6/action-download-artifact@v2
-        with:
-          name: plan
-          run_id: ${{ env.PLANNED_RUN_ID }}
-          github_token: ${{ env.GH_TOKEN }}
-
       # Connect to VPN
       - uses: ptonini/gha-openvpn@main
         with:
@@ -50,6 +40,16 @@ jobs:
           secrets: |
             ${{ vars.vault_github_token_path }} token | GH_TOKEN;
             ${{ vars.vault_gcp_roleset_path }} token | GCS_ACCESS_TOKEN;
+
+      # Fetch approved plan
+      - uses: ptonini/gha-get-labels@main
+        with:
+          labels: planned_run_id
+      - uses: dawidd6/action-download-artifact@v2
+        with:
+          name: plan
+          run_id: ${{ env.PLANNED_RUN_ID }}
+          github_token: ${{ env.GH_TOKEN }}
 
       # Initialize terraform and apply plan
       - run: terraform init -input=false -backend-config="access_token=${GCS_ACCESS_TOKEN}" -backend-config="encryption_key=${{ secrets.GCS_BACKEND_ENCRYPTION_KEY }}"
