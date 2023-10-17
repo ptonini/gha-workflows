@@ -75,6 +75,8 @@ jobs:
       digest: ${{ needs.publish_image.outputs.digest }}
       macros: ${{ vars.staging_macros }}
       vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
+      aws_role: ${{ vars.aws_staging_role }}
+      aws_eks_cluster: ${{ vars.aws_eks_staging_cluster }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
   performance_testing:
@@ -93,6 +95,8 @@ jobs:
       vars.skip_staging != 'true'
     with:
       vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
+      aws_role: ${{ vars.aws_staging_role }}
+      aws_eks_cluster: ${{ vars.aws_eks_staging_cluster }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
 
@@ -113,5 +117,7 @@ jobs:
     with:
       macros: ${{ vars.macros }}
       vault_k8s_role_path: ${{ vars.vault_k8s_role_path }}
+      aws_role: ${{ vars.aws_role }}
+      aws_eks_cluster: ${{ vars.aws_eks_role }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}

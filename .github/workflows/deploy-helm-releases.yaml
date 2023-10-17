@@ -13,7 +13,15 @@ on:
         type: string
       vault_k8s_role_path:
         description: ''
-        required: true
+        required: false
+        type: string
+      aws_role:
+        description: ''
+        required: false
+        type: string
+      aws_eks_cluster:
+        description: ''
+        required: false
         type: string
     secrets:
       OPENVPN_CONFIG:
@@ -27,14 +35,19 @@ on:
 jobs:
   deploy_helm_releases:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      KUBECONFIG: ${{ github.workspace }}/.kube/config
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
       - uses: ptonini/gha-openvpn@main
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
-          validation_addr: ${{ vars.vault_addr }}
+          validation_addr: ${{ vars.ovpn_validation_addr }}
+
       - uses: hashicorp/vault-action@v2
+        if: vars.workflow_auth_mode == 'vault'
         with:
           url: ${{ vars.vault_addr }}
           method: ${{ vars.vault_method }}
@@ -42,7 +55,18 @@ jobs:
           role: ${{ vars.vault_role }}
           secrets: |
             ${{ vars.vault_github_token_path }} token | GH_TOKEN;
-            ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG;
+            ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG_CONTENT;
+      - run: echo "${KUBECONFIG_CONTENT}" > ${KUBECONFIG} && chmod 0600 ${KUBECONFIG}
+        if: vars.workflow_auth_mode == 'vault'
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        if: vars.workflow_auth_mode == 'aws'
+        with:
+          role-to-assume: ${{ inputs.aws_role }}
+          aws-region: ${{ vars.aws_region }}
+      - run: aws eks update-kubeconfig --region ${{ vars.aws_region }} --name ${{ vars.aws_eks_cluster }}
+        if: vars.workflow_auth_mode == 'aws'
+
       - uses: ptonini/gha-create-helm-release-files@main
         id: releases
         with:
@@ -54,13 +78,16 @@ jobs:
           rp_manifest_file: ${{ vars.rp_manifest_file }}
           staging_domain: ${{ vars.staging_domain }}
           github_token: ${{ env.GH_TOKEN }}
+
       - uses: ptonini/gha-deploy-helm-releases@main
         with:
           releases: ${{ steps.releases.outputs.releases }}
-          kubeconfig: ${{ env.KUBECONFIG }}
+        env:
+          KUBECONFIG: ${{ env.KUBECONFIG }}
       - uses: thollander/actions-comment-pull-request@v2
         if: github.event_name == 'pull_request'
         with:
           message: ${{ steps.releases.outputs.message }}
+
     outputs:
       staging_host: ${{ steps.releases.outputs.staging_host }}
