@@ -67,6 +67,8 @@ jobs:
       - run: aws eks update-kubeconfig --region ${{ vars.aws_region }} --name ${{ vars.aws_eks_cluster }}
         if: vars.workflow_auth_mode == 'aws'
 
+      - run: kubectl get svc
+
       - uses: ptonini/gha-create-helm-release-files@main
         id: releases
         with:
