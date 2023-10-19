@@ -7,6 +7,14 @@ on:
         description: ''
         required: true
         type: string
+      aws_role:
+        description: ''
+        required: false
+        type: string
+      aws_eks_cluster:
+        description: ''
+        required: false
+        type: string
     secrets:
       OPENVPN_CONFIG:
         description: ''
@@ -21,14 +29,31 @@ jobs:
       - uses: ptonini/gha-openvpn@main
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
-          validation_addr: ${{ vars.vault_addr }}
+          validation_addr: ${{ vars.ovpn_validation_addr }}
+
       - uses: hashicorp/vault-action@v2
+        if: vars.workflow_auth_mode == 'vault'
         with:
           url: ${{ vars.vault_addr }}
           method: ${{ vars.vault_method }}
           path: ${{ vars.vault_path }}
           role: ${{ vars.vault_role }}
-          secrets: ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG;
+          secrets: |
+            ${{ vars.vault_github_token_path }} token | GH_TOKEN;
+            ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG_CONTENT;
+      - run: echo "${KUBECONFIG_CONTENT}" > ${KUBECONFIG} && chmod 0600 ${KUBECONFIG}
+        if: vars.workflow_auth_mode == 'vault'
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        if: vars.workflow_auth_mode == 'aws'
+        with:
+          role-to-assume: ${{ inputs.aws_role }}
+          aws-region: ${{ vars.aws_region }}
+      - run: aws eks update-kubeconfig --region ${{ vars.aws_region }} --name ${{ vars.aws_eks_cluster }}
+        if: vars.workflow_auth_mode == 'aws'
+
+      - run: kubectl get svc
+
       - uses: ptonini/gha-create-helm-release-files@main
         id: releases
         with:
@@ -39,4 +64,5 @@ jobs:
       - uses: ptonini/gha-uninstall-helm-releases@main
         with:
           releases: ${{ steps.releases.outputs.releases }}
-          kubeconfig: ${{ env.KUBECONFIG }}
+        env:
+          KUBECONFIG: ${{ env.KUBECONFIG }}
