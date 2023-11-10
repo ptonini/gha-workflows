@@ -52,6 +52,19 @@ jobs:
       - run: aws eks update-kubeconfig --region ${{ vars.aws_region }} --name ${{ vars.aws_eks_cluster }}
         if: vars.workflow_auth_mode == 'aws'
 
+      - uses: azure/login@v1
+        if: vars.workflow_auth_mode == 'azure'
+        with:
+          client-id: ${{ vars.azure_client_id }}
+          tenant-id: ${{ vars.azure_tenant_id }}
+          subscription-id: ${{ vars.azure_subscription_id }}
+      - uses: azure/aks-set-context@v3
+        if: vars.workflow_auth_mode == 'azure'
+        with:
+          admin: true
+          resource-group: ${{ vars.azure_resource_group }}
+          cluster-name: ${{ vars.azure_aks_cluster }}
+
       - run: kubectl get svc
 
       - uses: ptonini/gha-create-helm-release-files@main
