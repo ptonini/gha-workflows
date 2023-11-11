@@ -30,7 +30,7 @@ jobs:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
 
   destroy_demonstration:
-    uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/destroy-staging-namespace.yaml@main
     if: github.event.action == 'closed'
     with:
       vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}

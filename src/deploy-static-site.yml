@@ -44,13 +44,13 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
 
-  publish_frontend:
-    uses: ptonini/gha-workflows/.github/workflows/publish-frontend.yaml@main
+  publish_static_site:
+    uses: ptonini/gha-workflows/.github/workflows/publish-static-site.yaml@main
     if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]')
     secrets:
       NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
   deploy_to_production:
-    uses: ptonini/gha-workflows/.github/workflows/deploy-frontend.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/deploy-static-site.yaml@main
     needs:
       - publish_frontend
     with:

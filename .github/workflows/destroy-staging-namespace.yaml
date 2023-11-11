@@ -2,19 +2,6 @@ name: destroy-staging
 
 on:
   workflow_call:
-    inputs:
-      vault_k8s_role_path:
-        description: ''
-        required: false
-        type: string
-      aws_role:
-        description: ''
-        required: false
-        type: string
-      aws_eks_cluster:
-        description: ''
-        required: false
-        type: string
     secrets:
       OPENVPN_CONFIG:
         description: ''
@@ -37,7 +24,7 @@ jobs:
           validation_addr: ${{ vars.ovpn_validation_addr }}
 
       - uses: hashicorp/vault-action@v2
-        if: vars.kubernetes_provider == 'vault'
+        if: vars.kubeconfig_source == 'vault'
         with:
           url: ${{ vars.vault_addr }}
           method: ${{ vars.vault_method }}
@@ -47,28 +34,31 @@ jobs:
             ${{ vars.vault_github_token_path }} token | GH_TOKEN;
             ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG_CONTENT;
       - run: echo "${KUBECONFIG_CONTENT}" > ${KUBECONFIG} && chmod 0600 ${KUBECONFIG}
-        if: vars.kubernetes_provider == 'vault'
+        if: vars.kubeconfig_source == 'vault'
 
       - uses: aws-actions/configure-aws-credentials@v4
-        if: vars.kubernetes_provider == 'aws'
+        if: vars.kubeconfig_source == 'aws'
         with:
           role-to-assume: ${{ inputs.aws_role }}
           aws-region: ${{ vars.aws_region }}
       - run: aws eks update-kubeconfig --region ${{ vars.aws_region }} --name ${{ vars.aws_eks_cluster }}
-        if: vars.kubernetes_provider == 'aws'
+        if: vars.kubeconfig_source == 'aws'
 
       - uses: azure/login@v1
-        if: vars.kubernetes_provider == 'azure'
+        if: vars.kubeconfig_source == 'azure'
         with:
           client-id: ${{ vars.azure_client_id }}
           tenant-id: ${{ vars.azure_tenant_id }}
           subscription-id: ${{ vars.azure_subscription_id }}
       - uses: azure/aks-set-context@v3
-        if: vars.kubernetes_provider == 'azure'
+        if: vars.kubeconfig_source == 'azure'
         with:
           admin: true
           resource-group: ${{ vars.azure_resource_group }}
           cluster-name: ${{ vars.azure_aks_cluster }}
+
+      - run: kubectl get svc
+
 
       - uses: ptonini/gha-get-labels@main
         with:

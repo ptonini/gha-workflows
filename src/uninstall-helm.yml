@@ -13,9 +13,5 @@ permissions:
 jobs:
   uninstall_release:
     uses: ptonini/gha-workflows/.github/workflows/uninstall-helm-release.yaml@main
-    with:
-      vault_k8s_role_path: ${{ vars.vault_k8s_role_path }}
-      aws_role: ${{ vars.aws_role }}
-      aws_eks_cluster: ${{ vars.aws_eks_cluster }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}

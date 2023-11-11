@@ -64,6 +64,7 @@ jobs:
         BUILD_USERNAME=${{ vars.gh_packages_user }}
         BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
   deploy_to_staging:
+    environment: staging
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     if: |
       github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && 
@@ -73,10 +74,6 @@ jobs:
       - publish_image
     with:
       digest: ${{ needs.publish_image.outputs.digest }}
-      macros: ${{ vars.staging_macros }}
-      vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
-      aws_role: ${{ vars.aws_staging_role }}
-      aws_eks_cluster: ${{ vars.aws_eks_staging_cluster }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
   performance_testing:
@@ -88,15 +85,11 @@ jobs:
       host: ${{ needs.deploy_to_staging.outputs.staging_host }}
 
   destroy_staging:
-    uses: ptonini/gha-workflows/.github/workflows/destroy-staging.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/destroy-staging-namespace.yaml@main
     if: |
       github.event_name == 'pull_request' && github.event.action == 'closed' && 
       !startsWith(github.event.pull_request.head.ref, vars.release_pr_branch_prefix) &&
       vars.skip_staging != 'true'
-    with:
-      vault_k8s_role_path: ${{ vars.vault_k8s_staging_role_path }}
-      aws_role: ${{ vars.aws_staging_role }}
-      aws_eks_cluster: ${{ vars.aws_eks_staging_cluster }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
 
@@ -114,10 +107,5 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     needs:
       - promote_image
-    with:
-      macros: ${{ vars.macros }}
-      vault_k8s_role_path: ${{ vars.vault_k8s_role_path }}
-      aws_role: ${{ vars.aws_role }}
-      aws_eks_cluster: ${{ vars.aws_eks_cluster }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}

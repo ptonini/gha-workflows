@@ -3,23 +3,7 @@ name: deploy-helm-releases
 on:
   workflow_call:
     inputs:
-      macros:
-        description: ''
-        required: true
-        type: string
       digest:
-        description: ''
-        required: false
-        type: string
-      vault_k8s_role_path:
-        description: ''
-        required: false
-        type: string
-      aws_role:
-        description: ''
-        required: false
-        type: string
-      aws_eks_cluster:
         description: ''
         required: false
         type: string
@@ -47,7 +31,7 @@ jobs:
           validation_addr: ${{ vars.ovpn_validation_addr }}
 
       - uses: hashicorp/vault-action@v2
-        if: vars.kubernetes_provider == 'vault'
+        if: vars.kubeconfig_source == 'vault'
         with:
           url: ${{ vars.vault_addr }}
           method: ${{ vars.vault_method }}
@@ -57,24 +41,24 @@ jobs:
             ${{ vars.vault_github_token_path }} token | GH_TOKEN;
             ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG_CONTENT;
       - run: echo "${KUBECONFIG_CONTENT}" > ${KUBECONFIG} && chmod 0600 ${KUBECONFIG}
-        if: vars.kubernetes_provider == 'vault'
+        if: vars.kubeconfig_source == 'vault'
 
       - uses: aws-actions/configure-aws-credentials@v4
-        if: vars.kubernetes_provider == 'aws'
+        if: vars.kubeconfig_source == 'aws'
         with:
           role-to-assume: ${{ inputs.aws_role }}
           aws-region: ${{ vars.aws_region }}
       - run: aws eks update-kubeconfig --region ${{ vars.aws_region }} --name ${{ vars.aws_eks_cluster }}
-        if: vars.kubernetes_provider == 'aws'
+        if: vars.kubeconfig_source == 'aws'
 
       - uses: azure/login@v1
-        if: vars.kubernetes_provider == 'azure'
+        if: vars.kubeconfig_source == 'azure'
         with:
           client-id: ${{ vars.azure_client_id }}
           tenant-id: ${{ vars.azure_tenant_id }}
           subscription-id: ${{ vars.azure_subscription_id }}
       - uses: azure/aks-set-context@v3
-        if: vars.kubernetes_provider == 'azure'
+        if: vars.kubeconfig_source == 'azure'
         with:
           admin: true
           resource-group: ${{ vars.azure_resource_group }}
@@ -85,7 +69,7 @@ jobs:
       - uses: ptonini/gha-create-helm-release-files@main
         id: releases
         with:
-          macros: ${{ inputs.macros }}
+          macros: ${{ vars.macros }}
           digest: ${{ inputs.digest }}
           demonstration: ${{ vars.demonstration_repository }}
           container_registry: ${{ vars.container_registry }}
@@ -93,16 +77,12 @@ jobs:
           rp_manifest_file: ${{ vars.rp_manifest_file }}
           staging_domain: ${{ vars.staging_domain }}
           github_token: ${{ env.GH_TOKEN }}
-
       - uses: ptonini/gha-deploy-helm-releases@main
         with:
           releases: ${{ steps.releases.outputs.releases }}
-        env:
-          KUBECONFIG: ${{ env.KUBECONFIG }}
       - uses: thollander/actions-comment-pull-request@v2
         if: github.event_name == 'pull_request'
         with:
           message: ${{ steps.releases.outputs.message }}
-
     outputs:
       staging_host: ${{ steps.releases.outputs.staging_host }}
