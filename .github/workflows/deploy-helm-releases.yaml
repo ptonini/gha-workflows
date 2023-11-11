@@ -47,7 +47,7 @@ jobs:
           validation_addr: ${{ vars.ovpn_validation_addr }}
 
       - uses: hashicorp/vault-action@v2
-        if: vars.workflow_auth_mode == 'vault'
+        if: vars.kubernetes_provider == 'vault'
         with:
           url: ${{ vars.vault_addr }}
           method: ${{ vars.vault_method }}
@@ -57,24 +57,24 @@ jobs:
             ${{ vars.vault_github_token_path }} token | GH_TOKEN;
             ${{ inputs.vault_k8s_role_path }} kube_config | KUBECONFIG_CONTENT;
       - run: echo "${KUBECONFIG_CONTENT}" > ${KUBECONFIG} && chmod 0600 ${KUBECONFIG}
-        if: vars.workflow_auth_mode == 'vault'
+        if: vars.kubernetes_provider == 'vault'
 
       - uses: aws-actions/configure-aws-credentials@v4
-        if: vars.workflow_auth_mode == 'aws'
+        if: vars.kubernetes_provider == 'aws'
         with:
           role-to-assume: ${{ inputs.aws_role }}
           aws-region: ${{ vars.aws_region }}
       - run: aws eks update-kubeconfig --region ${{ vars.aws_region }} --name ${{ vars.aws_eks_cluster }}
-        if: vars.workflow_auth_mode == 'aws'
+        if: vars.kubernetes_provider == 'aws'
 
       - uses: azure/login@v1
-        if: vars.workflow_auth_mode == 'azure'
+        if: vars.kubernetes_provider == 'azure'
         with:
           client-id: ${{ vars.azure_client_id }}
           tenant-id: ${{ vars.azure_tenant_id }}
           subscription-id: ${{ vars.azure_subscription_id }}
       - uses: azure/aks-set-context@v3
-        if: vars.workflow_auth_mode == 'azure'
+        if: vars.kubernetes_provider == 'azure'
         with:
           admin: true
           resource-group: ${{ vars.azure_resource_group }}
