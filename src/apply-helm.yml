@@ -5,13 +5,6 @@ concurrency:
 
 on:
   workflow_dispatch: ~
-  push:
-    branches:
-      - master
-      - main
-      - legacy/*
-    paths:
-      - manifest.yaml
 
 permissions:
   id-token: write
@@ -24,6 +17,6 @@ jobs:
       macros: ${{ vars.macros }}
       vault_k8s_role_path: ${{ vars.vault_k8s_role_path }}
       aws_role: ${{ vars.aws_role }}
-      aws_eks_cluster: ${{ vars.aws_eks_role }}
+      aws_eks_cluster: ${{ vars.aws_eks_cluster }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
