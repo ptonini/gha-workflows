@@ -15,3 +15,4 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      GH_READER_TOKEN: ${{ secrets.GH_READER_TOKEN }}

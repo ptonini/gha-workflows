@@ -1,29 +1,19 @@
-name: deploy-helm-releases
+name: destroy-namespace
 
 on:
   workflow_call:
-    inputs:
-      digest:
-        description: ''
-        required: false
-        type: string
     secrets:
       OPENVPN_CONFIG:
         description: ''
         required: true
-      GH_READER_TOKEN:
-        description: ''
-        required: true
-    outputs:
-      staging_host:
-        description: ''
-        value: ${{ jobs.deploy_helm_releases.outputs.staging_host }}
+
+env:
+  AWS_REGION: us-east-1
 
 jobs:
-  deploy_helm_releases:
+  destroy_namespace:
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ github.token }}
       KUBECONFIG: ${{ github.workspace }}/.kube/config
     steps:
       - run: env | sort
@@ -48,23 +38,9 @@ jobs:
           azure_client_id: ${{ vars.azure_client_id }}
           azure_resource_group: ${{ vars.azure_resource_group }}
           azure_aks_cluster: ${{ vars.azure_aks_cluster }}
-      - uses: ptonini/gha-create-helm-release-files@main
-        id: releases
+      - uses: ptonini/gha-get-labels@main
         with:
-          digest: ${{ inputs.digest }}
-          demonstration: ${{ vars.demonstration_repository }}
-          container_registry: ${{ vars.container_registry }}
-          manifest_file: ${{ vars.manifest_file }}
-          manifest_macros: ${{ vars.manifest_macros }}
-          rp_manifest_file: ${{ vars.rp_manifest_file }}
-          staging_domain: ${{ vars.staging_domain }}
-          github_token: ${{ secrets.GH_READER_TOKEN }}
-      - uses: ptonini/gha-deploy-helm-releases@main
-        with:
-          releases: ${{ steps.releases.outputs.releases }}
-      - uses: thollander/actions-comment-pull-request@v2
-        if: github.event_name == 'pull_request'
-        with:
-          message: ${{ steps.releases.outputs.message }}
-    outputs:
-      staging_host: ${{ steps.releases.outputs.staging_host }}
+          labels: namespace
+      - run: helm list --short --namespace ${NAMESPACE} | xargs -r helm uninstall --namespace ${NAMESPACE}
+      - run: kubectl delete all --all --namespace ${NAMESPACE}
+      - run: kubectl delete namespace ${NAMESPACE}

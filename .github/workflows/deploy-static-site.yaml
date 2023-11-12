@@ -1,4 +1,4 @@
-name: deploy-frontend
+name: deploy-static-site
 
 on:
   workflow_call:
@@ -17,7 +17,7 @@ on:
         required: true
 
 jobs:
-  deploy_frontend:
+  deploy_static_site:
     runs-on: ubuntu-latest
     env:
       AWS_REGION: ${{ vars.aws_region }}
@@ -28,16 +28,10 @@ jobs:
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
           validation_addr: ${{ vars.vault_addr }}
-      - uses: hashicorp/vault-action@v2
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
-          url: ${{ vars.vault_addr }}
-          method: ${{ vars.vault_method }}
-          path: ${{ vars.vault_path }}
-          role: ${{ vars.vault_role }}
-          secrets: |
-            ${{ vars.vault_aws_role_path }} access_key | AWS_ACCESS_KEY_ID;
-            ${{ vars.vault_aws_role_path }} secret_key | AWS_SECRET_ACCESS_KEY;
-            ${{ vars.vault_aws_role_path }} security_token | AWS_SESSION_TOKEN;
+          role-to-assume: ${{ vars.aws_role }}
+          aws-region: ${{ vars.aws_region }}
       - uses: dsaltares/fetch-gh-release-asset@master
         with:
           version: tags/v${{ inputs.version }}

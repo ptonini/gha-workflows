@@ -85,13 +85,15 @@ jobs:
       host: ${{ needs.deploy_to_staging.outputs.staging_host }}
 
   destroy_staging:
-    uses: ptonini/gha-workflows/.github/workflows/destroy-staging-namespace.yaml@main
+    environment: staging
+    uses: ptonini/gha-workflows/.github/workflows/destroy-namespace.yaml@main
     if: |
       github.event_name == 'pull_request' && github.event.action == 'closed' && 
       !startsWith(github.event.pull_request.head.ref, vars.release_pr_branch_prefix) &&
       vars.skip_staging != 'true'
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      GH_READER_TOKEN: ${{ secrets.GH_READER_TOKEN }}
 
   approve_image:
     uses: ptonini/gha-workflows/.github/workflows/approve-image.yaml@main
@@ -109,3 +111,4 @@ jobs:
       - promote_image
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      GH_READER_TOKEN: ${{ secrets.GH_READER_TOKEN }}
