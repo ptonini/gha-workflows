@@ -3,10 +3,13 @@ name: terraform-apply
 on:
   workflow_call:
     secrets:
-      GCS_BACKEND_ENCRYPTION_KEY:
+      OPENVPN_CONFIG:
         description: ''
         required: true
-      OPENVPN_CONFIG:
+      OPENSTACK_CONFIG:
+        description: ''
+        required: false
+      GH_TOKEN:
         description: ''
         required: true
 
@@ -14,11 +17,13 @@ jobs:
   terraform_apply:
     runs-on: ubuntu-latest
     env:
-      VAULT_ADDR: ${{ vars.vault_addr }}
+      GITHUB_TOKEN: ${{ env.GH_TOKEN }}
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
       - uses: actions/checkout@v3
+
+      # Configure terraform
       - uses: hashicorp/setup-terraform@v2.0.3
         with:
           terraform_version: ${{ vars.terraform_version }}
@@ -27,33 +32,31 @@ jobs:
       - uses: ptonini/gha-openvpn@main
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
-          validation_addr: ${{ vars.vault_addr }}
+          validation_addr: ${{ vars.ovpn_validation_addr }}
 
-      # Fetch github token and backend credentials from Vault
-      - uses: hashicorp/vault-action@v2
+      # Connect to providers
+      - uses: ptonini/gha-cloud-login@main
         with:
-          url: ${{ vars.vault_addr }}
-          method: ${{ vars.vault_method }}
-          path: ${{ vars.vault_path }}
-          role: ${{ vars.vault_role }}
-          exportToken: true
-          secrets: |
-            ${{ vars.vault_github_token_path }} token | GH_TOKEN;
-            ${{ vars.vault_gcp_roleset_path }} token | GCS_ACCESS_TOKEN;
+          aws_region: ${{ vars.aws_region }}
+          aws_role: ${{ vars.aws_role }}
+          azure_tenant_id: ${{ vars.azure_tenant_id }}
+          azure_subscription_id: ${{ vars.azure_subscription_id }}
+          azure_client_id: ${{ vars.azure_client_id }}
+          openstack_config: ${{ secrets.OPENSTACK_CONFIG }}
+
+      # Initialize terraform
+      - run: terraform init -input=false
 
       # Fetch approved plan
       - uses: ptonini/gha-get-labels@main
         with:
-          labels: planned_run_id
+          labels: plan_run_id
       - uses: dawidd6/action-download-artifact@v2
         with:
           name: plan
           run_id: ${{ env.PLANNED_RUN_ID }}
           github_token: ${{ env.GH_TOKEN }}
 
-      # Initialize terraform and apply plan
-      - run: terraform init -input=false -backend-config="access_token=${GCS_ACCESS_TOKEN}" -backend-config="encryption_key=${{ secrets.GCS_BACKEND_ENCRYPTION_KEY }}"
+      # Apply plan
       - run: terraform apply -auto-approve -input=false ${{ vars.terraform_plan_filename }}
         id: apply
-        env:
-          VAULT_ADDR: ${{ vars.vault_addr }}

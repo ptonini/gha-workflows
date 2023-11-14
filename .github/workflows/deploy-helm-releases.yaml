@@ -3,6 +3,11 @@ name: deploy-helm-releases
 on:
   workflow_call:
     inputs:
+      environment:
+        description: ''
+        required: false
+        type: string
+        default: production
       digest:
         description: ''
         required: false
@@ -21,9 +26,9 @@ on:
 
 jobs:
   deploy_helm_releases:
+    environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ github.token }}
       KUBECONFIG: ${{ github.workspace }}/.kube/config
     steps:
       - run: env | sort
@@ -51,8 +56,8 @@ jobs:
       - uses: ptonini/gha-create-helm-release-files@main
         id: releases
         with:
+          environment: ${{ inputs.environment  }}
           digest: ${{ inputs.digest }}
-          demonstration: ${{ vars.demonstration_repository }}
           container_registry: ${{ vars.container_registry }}
           manifest_file: ${{ vars.manifest_file }}
           manifest_macros: ${{ vars.manifest_macros }}

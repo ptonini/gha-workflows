@@ -7,9 +7,6 @@ on:
         description: ''
         required: true
 
-env:
-  AWS_REGION: us-east-1
-
 jobs:
   destroy_namespace:
     runs-on: ubuntu-latest

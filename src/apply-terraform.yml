@@ -10,7 +10,6 @@ on:
       - synchronize
       - closed
     branches:
-      - master
       - main
     paths-ignore:
       - '.github/workflows/*'
@@ -33,12 +32,14 @@ jobs:
     uses: nodis-com-br/github-actions-workflows/.github/workflows/terraform-plan.yaml@main
     if: contains('opened synchronize', github.event.action)
     secrets:
-      GCS_BACKEND_ENCRYPTION_KEY: ${{ secrets.GCS_BACKEND_ENCRYPTION_KEY }}
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      OPENSTACK_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      GH_TOKEN: ${{}}
 
   apply:
     uses: nodis-com-br/github-actions-workflows/.github/workflows/terraform-apply.yaml@main
-    if: github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'planned')
+    if: github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'plan_created')
     secrets:
-      GCS_BACKEND_ENCRYPTION_KEY: ${{ secrets.GCS_BACKEND_ENCRYPTION_KEY }}
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      OPENSTACK_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      GH_TOKEN: ${{}}

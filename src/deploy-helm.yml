@@ -4,6 +4,7 @@ concurrency:
   group: ${{ github.event_name }}
 
 on:
+  workflow_dispatch: ~
   push:
     branches:
       - master
@@ -29,22 +30,16 @@ permissions:
   contents: write
 
 jobs:
-  
+
+
   code_testing:
     uses: ptonini/gha-workflows/.github/workflows/code-testing.yaml@main
-    if: |
-      github.event.action != 'closed' && 
-      github.event.head_commit.author.name != 'github-actions[bot]' && 
-      !startsWith(github.event.pull_request.head.ref, vars.staging_branch_prefix) && 
-      vars.skip_testing != 'true'
+    if: github.event.action != 'closed' && github.event.head_commit.author.name != 'github-actions[bot]' && vars.skip_testing != 'true'
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   code_linting:
     uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
-    if: |
-      github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) &&
-      !startsWith(github.event.pull_request.head.ref, vars.staging_branch_prefix) && 
-      vars.skip_linting != 'true'
+    if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && vars.skip_linting != 'true'
   security_scan:
     uses: ptonini/gha-workflows/.github/workflows/trufflehog.yaml@main
     if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
@@ -52,19 +47,19 @@ jobs:
     uses: ptonini/gha-workflows/.github/workflows/release-please.yaml@main
     if: github.event_name == 'push'
 
+  # Build and publish docker image
   publish_image:
     uses: ptonini/gha-workflows/.github/workflows/publish-docker-image.yaml@main
-    if: |
-      github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && 
-      !startsWith(github.event.pull_request.head.ref, vars.staging_branch_prefix)
+    if: github.event_name == 'pull_request' && contains('opened synchronize', github.event.action)
     with:
       tags: ${{ format('latest pr{0} pr{0}-{1}', github.event.number, github.run_number) }}
     secrets:
       BUILD_ARGUMENTS: |
         BUILD_USERNAME=${{ vars.gh_packages_user }}
         BUILD_PASSWORD=${{ secrets.GH_PACKAGES_TOKEN }}
+
+  # Create staging environment for testing
   deploy_to_staging:
-    environment: staging
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     if: |
       github.event_name == 'pull_request' && contains('opened synchronize', github.event.action) && 
@@ -73,9 +68,12 @@ jobs:
     needs:
       - publish_image
     with:
+      environment: staging
       digest: ${{ needs.publish_image.outputs.digest }}
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
+      GH_READER_TOKEN: ${{ secrets.GH_READER_TOKEN }}
+
   performance_testing:
     uses: ptonini/gha-workflows/.github/workflows/performance-testing.yaml@main
     if: vars.performance_testing == 'true'
@@ -84,17 +82,14 @@ jobs:
     with:
       host: ${{ needs.deploy_to_staging.outputs.staging_host }}
 
+  # Destroy staging environment resources and namespace when pr is closed/merged
   destroy_staging:
-    environment: staging
     uses: ptonini/gha-workflows/.github/workflows/destroy-namespace.yaml@main
-    if: |
-      github.event_name == 'pull_request' && github.event.action == 'closed' && 
-      !startsWith(github.event.pull_request.head.ref, vars.release_pr_branch_prefix) &&
-      vars.skip_staging != 'true'
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && vars.skip_staging != 'true'
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-      GH_READER_TOKEN: ${{ secrets.GH_READER_TOKEN }}
 
+  # Mark merged pr container image as approved
   approve_image:
     uses: ptonini/gha-workflows/.github/workflows/approve-image.yaml@main
     if: |
@@ -102,9 +97,11 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'published') && 
       !startsWith(github.event.pull_request.head.ref, vars.release_pr_branch_prefix)
 
+  # Set version tag do pr container image
   promote_image:
     uses: ptonini/gha-workflows/.github/workflows/promote-image.yaml@main
     if: github.event_name == 'push' && contains(github.event.commits.*.author.name, 'github-actions[bot]')
+  # Deploy container image to production
   deploy_to_production:
     uses: ptonini/gha-workflows/.github/workflows/deploy-helm-releases.yaml@main
     needs:

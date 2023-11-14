@@ -3,20 +3,27 @@ name: terraform-plan
 on:
   workflow_call:
     secrets:
-      GCS_BACKEND_ENCRYPTION_KEY:
+      OPENVPN_CONFIG:
         description: ''
         required: true
-      OPENVPN_CONFIG:
+      OPENSTACK_CONFIG:
+        description: ''
+        required: false
+      GH_TOKEN:
         description: ''
         required: true
 
 jobs:
   terraform_plan:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ env.GH_TOKEN }}
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
       - uses: actions/checkout@v3
+
+      # Configure terraform
       - uses: hashicorp/setup-terraform@v2.0.3
         with:
           terraform_version: ${{ vars.terraform_version }}
@@ -25,27 +32,26 @@ jobs:
       - uses: ptonini/gha-openvpn@main
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
-          validation_addr: ${{ vars.vault_addr }}
+          validation_addr: ${{ vars.ovpn_validation_addr }}
 
-      # Fetch github token and backend credentials from Vault
-      - uses: hashicorp/vault-action@v2
+      # Connect to providers
+      - uses: ptonini/gha-cloud-login@main
         with:
-          url: ${{ vars.vault_addr }}
-          method: ${{ vars.vault_method }}
-          path: ${{ vars.vault_path }}
-          role: ${{ vars.vault_role }}
-          exportToken: true
-          secrets: |
-            ${{ vars.vault_github_token_path }} token | GH_TOKEN;
-            ${{ vars.vault_gcp_roleset_path }} token | GCS_ACCESS_TOKEN;
+          aws_region: ${{ vars.aws_region }}
+          aws_role: ${{ vars.aws_role }}
+          azure_tenant_id: ${{ vars.azure_tenant_id }}
+          azure_subscription_id: ${{ vars.azure_subscription_id }}
+          azure_client_id: ${{ vars.azure_client_id }}
+          openstack_config: ${{ secrets.OPENSTACK_CONFIG }}
 
-      # Initialize terraform and create plan
-      - run: terraform init -input=false -backend-config="access_token=${GCS_ACCESS_TOKEN}" -backend-config="encryption_key=${{ secrets.GCS_BACKEND_ENCRYPTION_KEY }}"
+      # Initialize terraform
+      - run: terraform init -input=false
+      - run: echo ${{ vars.tfvars }} > terraform.tfvars.json
+
+      # Create plan
       - run: terraform plan -out=${{ vars.terraform_plan_filename }} -no-color -input=false -detailed-exitcode
         id: plan
         continue-on-error: true
-        env:
-          VAULT_ADDR: ${{ vars.vault_addr }}
 
       # Generate resumed plan view
       - run: terraform show -no-color ${{ vars.terraform_plan_filename }}
@@ -72,7 +78,9 @@ jobs:
           overwrite: true
           github_token: ${{ env.GH_TOKEN }}
           labels: | 
-            planned
-            planned_run_id: ${{ github.run_id }}
+            plan_created
+            plan_run_id: ${{ github.run_id }}
+
+      # Break job if plan failed
       - run: exit 1
         if: steps.plan.outputs.exitcode == '1'
