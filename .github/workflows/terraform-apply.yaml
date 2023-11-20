@@ -2,6 +2,12 @@ name: terraform-apply
 
 on:
   workflow_call:
+    inputs:
+      terraform_plan_filename:
+        description: ''
+        required: false
+        type: string
+        default: plan
     secrets:
       OPENVPN_CONFIG:
         description: ''
@@ -17,7 +23,7 @@ jobs:
   terraform_apply:
     runs-on: ubuntu-latest
     env:
-      GITHUB_TOKEN: ${{ env.GH_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
@@ -58,5 +64,5 @@ jobs:
           github_token: ${{ env.GH_TOKEN }}
 
       # Apply plan
-      - run: terraform apply -auto-approve -input=false ${{ vars.terraform_plan_filename }}
+      - run: terraform apply -auto-approve -input=false ${{ inputs.terraform_plan_filename }}
         id: apply

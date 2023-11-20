@@ -22,24 +22,25 @@ permissions:
 jobs:
 
   code_linting:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/code-linting.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/code-linting.yaml@main
     if: contains('opened synchronize', github.event.action) && vars.skip_linting != 'true'
   security_scan:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/trufflehog.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/trufflehog.yaml@main
     if: contains('opened synchronize', github.event.action)
 
   plan:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/terraform-plan.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/terraform-plan.yaml@main
     if: contains('opened synchronize', github.event.action)
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-      OPENSTACK_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-      GH_TOKEN: ${{}}
+      OPENSTACK_CONFIG: ${{ secrets.OPENSTACK_CONFIG }}
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      TFVARS: ${{ secrets.TFVARS }}
 
   apply:
-    uses: nodis-com-br/github-actions-workflows/.github/workflows/terraform-apply.yaml@main
+    uses: ptonini/gha-workflows/.github/workflows/terraform-apply.yaml@main
     if: github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'plan_created')
     secrets:
       OPENVPN_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-      OPENSTACK_CONFIG: ${{ secrets.OPENVPN_CONFIG }}
-      GH_TOKEN: ${{}}
+      OPENSTACK_CONFIG: ${{ secrets.OPENSTACK_CONFIG }}
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}

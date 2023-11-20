@@ -2,6 +2,12 @@ name: terraform-plan
 
 on:
   workflow_call:
+    inputs:
+      terraform_plan_filename:
+        description: ''
+        required: false
+        type: string
+        default: plan
     secrets:
       OPENVPN_CONFIG:
         description: ''
@@ -12,12 +18,15 @@ on:
       GH_TOKEN:
         description: ''
         required: true
+      TFVARS:
+        description: ''
+        required: true
 
 jobs:
   terraform_plan:
     runs-on: ubuntu-latest
     env:
-      GITHUB_TOKEN: ${{ env.GH_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
       - run: env | sort
       - run: cat ${GITHUB_EVENT_PATH}
@@ -46,15 +55,15 @@ jobs:
 
       # Initialize terraform
       - run: terraform init -input=false
-      - run: echo ${{ vars.tfvars }} > terraform.tfvars.json
+      - run: echo '${{ secrets.TFVARS }}' > terraform.tfvars.json
 
       # Create plan
-      - run: terraform plan -out=${{ vars.terraform_plan_filename }} -no-color -input=false -detailed-exitcode
+      - run: terraform plan -out=${{ inputs.terraform_plan_filename }} -no-color -input=false -detailed-exitcode
         id: plan
         continue-on-error: true
 
       # Generate resumed plan view
-      - run: terraform show -no-color ${{ vars.terraform_plan_filename }}
+      - run: terraform show -no-color ${{ inputs.terraform_plan_filename }}
         id: show
         if: hashFiles(vars.terraform_plan_filename)
 
@@ -70,7 +79,7 @@ jobs:
         if: steps.plan.outputs.exitcode == '2'
         with:
           name: plan
-          path: ${{ vars.terraform_plan_filename }}
+          path: ${{ inputs.terraform_plan_filename }}
           retention-days: 1
       - uses: ptonini/gha-set-labels@main
         if: steps.plan.outputs.exitcode == '2'
