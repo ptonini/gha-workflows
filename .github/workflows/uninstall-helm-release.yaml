@@ -19,20 +19,27 @@ jobs:
         with:
           openvpn_config: ${{ secrets.OPENVPN_CONFIG }}
           validation_addr: ${{ vars.ovpn_validation_addr }}
-      - uses: ptonini/gha-get-kubeconfig@main
+      - uses: ptonini/gha-cloud-login@main
         with:
-          kubeconfig_source: ${{ vars.kubeconfig_source }}
           vault_addr: ${{ vars.vault_addr }}
           vault_method: ${{ vars.vault_method }}
           vault_path: ${{ vars.vault_path }}
           vault_role: ${{ vars.vault_role }}
+          aws_region: ${{ vars.aws_region }}
+          aws_role: ${{ vars.aws_role }}
+          azure_tenant_id: ${{ vars.azure_tenant_id }}
+          azure_subscription_id: ${{ vars.azure_subscription_id }}
+          azure_client_id: ${{ vars.azure_client_id }}
+          openstack_config: ${{ secrets.OPENSTACK_CONFIG }}
+      - uses: ptonini/gha-get-kubeconfig@main
+        with:
+          kubeconfig_source: ${{ vars.kubeconfig_source }}
+          vault_addr: ${{ vars.vault_addr }}
+          vault_token: ${{ env.VAULT_TOKEN }}
           vault_k8s_role_path: ${{ vars.vault_k8s_role_path }}
           aws_region: ${{ vars.aws_region }}
           aws_role: ${{ vars.aws_role }}
           aws_eks_cluster: ${{ vars.aws_eks_cluster }}
-          azure_tenant_id: ${{ vars.azure_tenant_id }}
-          azure_subscription_id: ${{ vars.azure_subscription_id }}
-          azure_client_id: ${{ vars.azure_client_id }}
           azure_resource_group: ${{ vars.azure_resource_group }}
           azure_aks_cluster: ${{ vars.azure_aks_cluster }}
       - uses: ptonini/gha-create-helm-release-files@main

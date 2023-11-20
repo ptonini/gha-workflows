@@ -46,6 +46,10 @@ jobs:
       # Connect to providers
       - uses: ptonini/gha-cloud-login@main
         with:
+          vault_addr: ${{ vars.vault_addr }}
+          vault_method: ${{ vars.vault_method }}
+          vault_path: ${{ vars.vault_path }}
+          vault_role: ${{ vars.vault_role }}
           aws_region: ${{ vars.aws_region }}
           aws_role: ${{ vars.aws_role }}
           azure_tenant_id: ${{ vars.azure_tenant_id }}
@@ -65,7 +69,7 @@ jobs:
       # Generate resumed plan view
       - run: terraform show -no-color ${{ inputs.terraform_plan_filename }}
         id: show
-        if: hashFiles(vars.terraform_plan_filename)
+        if: hashFiles(inputs.terraform_plan_filename)
 
       # Save outputs to step summary and pr comments
       - run: echo '```${{ steps.show.outputs.stdout }}${{ steps.plan.outputs.stderr }}```' >> $GITHUB_STEP_SUMMARY
@@ -85,7 +89,7 @@ jobs:
         if: steps.plan.outputs.exitcode == '2'
         with:
           overwrite: true
-          github_token: ${{ env.GH_TOKEN }}
+          github_token: ${{ secrets.GH_TOKEN }}
           labels: | 
             plan_created
             plan_run_id: ${{ github.run_id }}
