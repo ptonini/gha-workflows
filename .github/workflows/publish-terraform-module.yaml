@@ -1,0 +1,20 @@
+name: publish-terraform-module
+
+on:
+  workflow_call:
+    secrets:
+      TERRAFORM_CLOUD_TOKEN:
+        description: ''
+        required: false
+
+
+jobs:
+  publish-terraform-module:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: terraform init
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_CLOUD_TOKEN }}
+      - run: terraform validate
+      - uses: RichardInnocent/semantic-versioning-git@v0.0.1

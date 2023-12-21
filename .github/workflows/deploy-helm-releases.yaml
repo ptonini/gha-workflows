@@ -50,14 +50,11 @@ jobs:
           openstack_config: ${{ secrets.OPENSTACK_CONFIG }}
       - uses: ptonini/gha-get-kubeconfig@main
         with:
+          cluster_name: ${{ vars.kubernetes_cluster_name }}
           kubeconfig_source: ${{ vars.kubeconfig_source }}
           vault_addr: ${{ vars.vault_addr }}
-          vault_token: ${{ env.VAULT_TOKEN }}
-          vault_k8s_role_path: ${{ vars.vault_k8s_role_path }}
           aws_region: ${{ vars.aws_region }}
-          aws_eks_cluster: ${{ vars.aws_eks_cluster }}
           azure_resource_group: ${{ vars.azure_resource_group }}
-          azure_aks_cluster: ${{ vars.azure_aks_cluster }}
       - uses: ptonini/gha-create-helm-release-files@main
         id: releases
         with:
